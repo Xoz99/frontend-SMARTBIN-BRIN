@@ -269,15 +269,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* BOTTOM NAV */}
-      <nav className={styles.bottomNavWrapper}>
-        <button className={styles.navItem}><Compass size={22} /></button>
-        <button className={styles.navItem}><Bell size={22} /></button>
-        <button className={`${styles.navItem} ${styles.active}`}><HomeIcon size={22} /></button>
-        <button className={styles.navItem}><BarChart2 size={22} /></button>
-        <button className={styles.navItem}><Settings size={22} /></button>
-      </nav>
-
     </div>
   );
 }

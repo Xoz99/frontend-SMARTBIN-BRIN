@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Outfit } from 'next/font/google';
 import './globals.css';
+import BottomNav from '@/components/BottomNav';
 
 const outfit = Outfit({ 
   subsets: ['latin'], 
@@ -21,7 +22,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={outfit.variable}>{children}</body>
+      <body className={outfit.variable}>
+        {children}
+        <BottomNav />
+      </body>
     </html>
   );
 }

@@ -46,8 +46,8 @@ export default function MapTracker() {
       <MapContainer 
         center={[-6.914744, 107.609810]} 
         zoom={13} 
-        scrollWheelZoom={false}
-        zoomControl={false}
+        scrollWheelZoom={true}
+        zoomControl={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

@@ -1,0 +1,215 @@
+.pageContainer {
+  max-width: 1536px;
+  width: 96%;
+  margin: 0 auto;
+  padding: var(--spacing-md) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding-bottom: 100px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.headerTitle h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.backButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.backButton:hover {
+  background: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.markReadBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-green);
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: var(--color-green-light);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.markReadBtn:hover {
+  background: white;
+  border-color: var(--color-green);
+}
+
+.filterBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.filterBar::-webkit-scrollbar {
+  display: none;
+}
+
+.filterBtn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: white;
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.filterBtn.active {
+  background: var(--text-primary);
+  color: white;
+  border-color: var(--text-primary);
+}
+
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notifItem {
+  display: flex;
+  gap: 16px;
+  padding: 20px 56px 20px 20px; /* Ditambah padding kanan agar tak terhalang titik biru */
+  border-radius: var(--border-radius-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  align-items: flex-start;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.notifItem:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.notifItem.unread {
+  background: white;
+}
+
+.notifItem.critical { border-left: 4px solid var(--color-red); }
+.notifItem.warning { border-left: 4px solid var(--color-yellow); }
+.notifItem.normal { border-left: 4px solid var(--color-green); }
+
+.notifIcon {
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.critical .notifIcon { background: var(--color-red-light); color: var(--color-red); }
+.warning .notifIcon { background: var(--color-yellow-light); color: var(--color-yellow); }
+.normal .notifIcon { background: var(--color-green-light); color: var(--color-green); }
+
+.notifContent {
+  flex: 1;
+}
+
+.notifHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.notifHeader h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.time {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.message {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.critical .message { color: var(--color-red); }
+.warning .message { color: var(--color-yellow); }
+
+.unreadIndicator {
+  position: absolute;
+  top: 24px;
+  right: 20px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-blue);
+  box-shadow: 0 0 0 4px var(--color-blue-light);
+}
+
+/* Responsiveness */
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .notifHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .unreadIndicator {
+    top: 16px;
+    right: 16px;
+  }
+}
