@@ -151,12 +151,13 @@
 
 .chartBars {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: flex-end;
   height: 100%;
   position: relative;
   z-index: 2;
   padding-bottom: 24px; /* Space for X-Axis labels */
+  padding-inline: 8px;
 }
 
 .barGroup {
@@ -164,7 +165,8 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  width: 10%;
+  flex: 1;
+  max-width: 56px;
   height: 100%;
   justify-content: flex-end;
 }
@@ -219,10 +221,165 @@
   color: var(--text-secondary);
 }
 
+/* Charts row: bar (wider) + donut (narrower) */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+/* Donut */
+.donutWrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.donutSvg {
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.donutCenterValue {
+  font-size: 28px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.donutCenterLabel {
+  font-size: 12px;
+  fill: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.donutLegend {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.donutLegend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  flex: 1;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.legendValue {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Top Areas */
+.areaList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.areaItem {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.areaRank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-color);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.areaItem:nth-child(1) .areaRank { background: #d1565a; color: white; }
+.areaItem:nth-child(2) .areaRank { background: #d89b3f; color: white; }
+.areaItem:nth-child(3) .areaRank { background: #f1c95c; color: #111; }
+
+.areaBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.areaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.areaName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.areaFullCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.areaProgressBar {
+  height: 6px;
+  background: #eef0ee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.areaProgressFill {
+  height: 100%;
+  background: linear-gradient(to right, var(--color-green), #68b897);
+  border-radius: 3px;
+}
+
+.areaMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
+  }
+
+  .chartsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .donutWrapper {
+    flex-direction: column;
     gap: 16px;
   }
 }

@@ -180,7 +180,7 @@ export default function Home() {
       {/* BOTTOM SECTION - STATUS & JADWAL */}
       <section className={styles.mainGrid}>
         {/* Status Bin - Tampilan Cepat */}
-        <div className={styles.transparentPanel}>
+        <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Status Bin – Tampilan Cepat</h2>
           </div>
