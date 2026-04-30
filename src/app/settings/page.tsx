@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './page.module.css';
-import { Save, CalendarClock, Trash2, ShieldAlert, CheckCircle2, Truck, Bell } from 'lucide-react';
+import { CalendarClock, Trash2, ShieldAlert, CheckCircle2, Truck, Bell } from 'lucide-react';
 
 export default function SettingsPage() {
   const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
@@ -36,9 +36,6 @@ export default function SettingsPage() {
           <h1>Setelan Jadwal Pickup</h1>
           <p>Konfigurasi kapan truk-truk kebersihan akan diterjunkan berdasarkan kapasitas status BIN.</p>
         </div>
-        <button className={styles.saveBtn} onClick={() => alert("Pengaturan berhasil disimpan!")}>
-          <Save size={18} /> Simpan Perubahan
-        </button>
       </header>
 
       {/* Main Settings Grid */}

@@ -13,22 +13,21 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: var(--card-bg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  align-items: flex-end;
+  gap: 24px;
+  padding: 8px 4px 16px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .greeting h1 {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: -0.02em;
 }
 
 .greeting p {

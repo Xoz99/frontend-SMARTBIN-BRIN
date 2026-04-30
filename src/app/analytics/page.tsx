@@ -1,10 +1,58 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './page.module.css';
-import { TrendingUp, BarChart2, Zap, CalendarDays, MapPin } from 'lucide-react';
+import { TrendingUp, BarChart2, Zap, CalendarDays, MapPin, Download } from 'lucide-react';
+
+function formatDateID(s: string) {
+  if (!s) return '';
+  const [y, m, d] = s.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function daysAgoISO(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
 
 export default function AnalyticsPage() {
+  const periods = ['Hari ini', 'Minggu ini', 'Bulan ini', 'Custom'] as const;
+  const [activePeriod, setActivePeriod] = useState<typeof periods[number]>('Minggu ini');
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
+  const customRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setCustomStart(daysAgoISO(7));
+    setCustomEnd(todayISO());
+  }, []);
+
+  useEffect(() => {
+    if (!customOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (customRef.current && !customRef.current.contains(e.target as Node)) {
+        setCustomOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [customOpen]);
+
+  const handlePeriodClick = (p: typeof periods[number]) => {
+    setActivePeriod(p);
+    setCustomOpen(p === 'Custom');
+  };
+
+  const periodLabel = activePeriod === 'Custom'
+    ? `${formatDateID(customStart)} – ${formatDateID(customEnd)}`
+    : activePeriod.toLowerCase();
+
   const weeklyData = [
     { day: 'Sen', volume: 60 },
     { day: 'Sel', volume: 80 },
@@ -15,6 +63,14 @@ export default function AnalyticsPage() {
     { day: 'Min', volume: 110 },
   ];
 
+  const topAreas = [
+    { area: 'Darmo',     bins: 14, fullCount: 87, fillRate: 92 },
+    { area: 'Gubeng',    bins: 11, fullCount: 72, fillRate: 81 },
+    { area: 'Tegalsari', bins: 9,  fullCount: 61, fillRate: 74 },
+    { area: 'Wonokromo', bins: 12, fullCount: 54, fillRate: 66 },
+    { area: 'Genteng',   bins: 8,  fullCount: 48, fillRate: 58 },
+  ];
+
   const maxVolume = Math.max(...weeklyData.map(d => d.volume));
 
   const wasteDistribution = [
@@ -22,14 +78,6 @@ export default function AnalyticsPage() {
     { label: 'Anorganik', value: 35, color: '#3b82f6' },
     { label: 'B3',        value: 12, color: '#d1565a' },
     { label: 'Lainnya',   value: 8,  color: '#d89b3f' },
-  ];
-
-  const topAreas = [
-    { area: 'Darmo',     bins: 14, fullCount: 87, fillRate: 92 },
-    { area: 'Gubeng',    bins: 11, fullCount: 72, fillRate: 81 },
-    { area: 'Tegalsari', bins: 9,  fullCount: 61, fillRate: 74 },
-    { area: 'Wonokromo', bins: 12, fullCount: 54, fillRate: 66 },
-    { area: 'Genteng',   bins: 8,  fullCount: 48, fillRate: 58 },
   ];
 
   const donutRadius = 70;
@@ -42,11 +90,80 @@ export default function AnalyticsPage() {
       
       {/* Header */}
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerTitle}>
           <h1>Analitik Data</h1>
-          <p>Statistik performa manajemen sampah bulan ini.</p>
+          <p>Statistik performa manajemen sampah {periodLabel}.</p>
         </div>
-        <button className={styles.exportBtn}>Ekspor Laporan</button>
+        <div className={styles.headerActions}>
+          <div className={styles.periodFilter} role="tablist" ref={customRef}>
+            {periods.map((p) => (
+              <div key={p} className={styles.periodPillWrap}>
+                <button
+                  role="tab"
+                  aria-selected={activePeriod === p}
+                  className={`${styles.periodPill} ${activePeriod === p ? styles.periodPillActive : ''}`}
+                  onClick={() => handlePeriodClick(p)}
+                >
+                  {p === 'Custom' && <CalendarDays size={14} />}
+                  {p}
+                </button>
+
+                {p === 'Custom' && customOpen && activePeriod === 'Custom' && (
+                  <div className={styles.datePopover} role="dialog">
+                    <div className={styles.dateRow}>
+                      <label>
+                        <span>Dari</span>
+                        <input
+                          type="date"
+                          value={customStart}
+                          max={customEnd}
+                          onChange={(e) => setCustomStart(e.target.value)}
+                        />
+                      </label>
+                      <label>
+                        <span>Sampai</span>
+                        <input
+                          type="date"
+                          value={customEnd}
+                          min={customStart}
+                          max={todayISO()}
+                          onChange={(e) => setCustomEnd(e.target.value)}
+                        />
+                      </label>
+                    </div>
+                    <div className={styles.dateActions}>
+                      <button
+                        type="button"
+                        className={styles.datePresetBtn}
+                        onClick={() => { setCustomStart(daysAgoISO(7)); setCustomEnd(todayISO()); }}
+                      >
+                        7 hari
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.datePresetBtn}
+                        onClick={() => { setCustomStart(daysAgoISO(30)); setCustomEnd(todayISO()); }}
+                      >
+                        30 hari
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.dateApplyBtn}
+                        onClick={() => setCustomOpen(false)}
+                      >
+                        Terapkan
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <button className={styles.exportBtn}>
+            <Download size={16} />
+            Ekspor Laporan
+          </button>
+        </div>
       </header>
 
       {/* KPI Cards */}

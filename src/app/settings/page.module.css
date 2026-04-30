@@ -12,44 +12,28 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: var(--card-bg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  align-items: flex-end;
+  gap: 24px;
+  padding: 8px 4px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.headerTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .headerTitle h1 {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
 
 .headerTitle p {
   color: var(--text-secondary);
   font-size: 14px;
-}
-
-.saveBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--text-primary);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 14px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s;
-}
-
-.saveBtn:hover {
-  transform: translateY(-2px);
-  background: #333;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
 }
 
 .settingsGrid {

@@ -12,19 +12,23 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: var(--card-bg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  align-items: flex-end;
+  gap: 24px;
+  padding: 8px 4px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.headerTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .header h1 {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
 
 .header p {
@@ -32,19 +36,162 @@
   font-size: 14px;
 }
 
-.exportBtn {
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.periodFilter {
+  display: inline-flex;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.periodPill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.periodPill:hover {
+  color: var(--text-primary);
+}
+
+.periodPillActive,
+.periodPillActive:hover {
   background: var(--color-green);
   color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
+  box-shadow: 0 2px 6px rgba(72, 132, 108, 0.25);
+}
+
+.periodPillWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.periodPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.datePopover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dateRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.dateRow label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dateRow input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-color);
+  font-family: inherit;
+}
+
+.dateRow input[type="date"]:focus {
+  outline: none;
+  border-color: var(--color-green);
+  box-shadow: 0 0 0 2px rgba(72, 132, 108, 0.15);
+}
+
+.dateActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.datePresetBtn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.datePresetBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.dateApplyBtn {
+  margin-left: auto;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--color-green);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dateApplyBtn:hover {
+  filter: brightness(1.05);
+}
+
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-green);
+  color: white;
+  padding: 9px 18px;
+  border-radius: 999px;
   font-weight: 600;
   font-size: 14px;
   box-shadow: 0 4px 10px rgba(72, 132, 108, 0.2);
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  border: none;
+  cursor: pointer;
 }
 
 .exportBtn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(72, 132, 108, 0.3);
 }
 
@@ -372,6 +519,16 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .periodFilter {
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   .chartsRow {
