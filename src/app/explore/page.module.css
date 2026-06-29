@@ -68,25 +68,93 @@
   color: var(--text-tertiary);
 }
 
-.filterBtn {
+.searchClear {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--bg-color);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  margin-left: 12px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
-.filterBtn:hover {
-  background: var(--color-green);
-  color: white;
-  border-color: var(--color-green);
+.searchClear:hover {
+  background: var(--bg-color);
+  color: var(--text-primary);
+}
+
+/* Dropdown hasil pencarian bin */
+.searchResults {
+  margin-top: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.searchEmpty {
+  padding: 14px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.12s ease;
+}
+
+.resultRow:hover {
+  background: var(--bg-color);
+}
+
+.resultRow:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.resultRow[data-status="normal"] .binDot { background: var(--color-green); }
+.resultRow[data-status="warning"] .binDot { background: var(--color-yellow); }
+.resultRow[data-status="critical"] .binDot { background: var(--color-red); }
+
+.resultInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.resultName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.resultLoc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .infoPanel {
@@ -130,80 +198,127 @@
 .zoneList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
+.zoneGroup {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.zoneGroup:last-child {
+  border-bottom: none;
+}
+
+/* Baris simpel: titik status · nama zona · jumlah (muted di kanan) · caret */
 .zoneItem {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border-radius: var(--border-radius-lg);
-  background: white;
-  border: 1px solid var(--border-color);
+  gap: 10px;
+  padding: 11px 6px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.12s ease;
 }
 
 .zoneItem:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: var(--shadow-md);
-  border-color: #d1d5db; 
+  background: var(--bg-color);
 }
 
-.zoneIconWrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.zoneCaret {
+  color: var(--text-tertiary);
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.15s ease;
 }
 
-.zoneItem[data-status="normal"] .zoneIconWrapper { background: var(--color-green-light); color: var(--color-green); }
-.zoneItem[data-status="warning"] .zoneIconWrapper { background: var(--color-yellow-light); color: var(--color-yellow); }
-.zoneItem[data-status="critical"] .zoneIconWrapper { background: var(--color-red-light); color: var(--color-red); }
+.zoneItem[data-open="true"] .zoneCaret {
+  transform: rotate(90deg);
+  color: var(--text-secondary);
+}
 
-.zoneInfo {
-  flex: 1;
+/* Sublist bin di dalam zona */
+.binSublist {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  padding: 2px 0 8px 16px;
 }
 
-.zoneInfo h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
+.binRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.12s ease;
 }
 
-.statusBadge {
+.binRow:hover {
+  background: var(--bg-color);
+}
+
+.binRow:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.binDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-tertiary);
+}
+
+.binRow[data-status="normal"] .binDot { background: var(--color-green); }
+.binRow[data-status="warning"] .binDot { background: var(--color-yellow); }
+.binRow[data-status="critical"] .binDot { background: var(--color-red); }
+
+.binName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.binMeta {
   font-size: 12px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
-}
-
-/* Badge pewarnaan spesifik per item */
-.zoneItem[data-status="normal"] .statusBadge { background: #f0fdf4; color: var(--color-green); border: 1px solid #dcfce7; }
-.zoneItem[data-status="warning"] .statusBadge { background: #fffbeb; color: var(--color-yellow); border: 1px solid #fef3c7; }
-.zoneItem[data-status="critical"] .statusBadge { background: #fef2f2; color: var(--color-red); border: 1px solid #fee2e2; }
-
-.chevron {
+  font-weight: 600;
   color: var(--text-tertiary);
-  font-size: 24px;
-  line-height: 1;
-  font-weight: 300;
-  transition: transform 0.2s;
-  padding-right: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
-.zoneItem:hover .chevron {
-  transform: translateX(4px);
+.zoneDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-tertiary);
+}
+
+.zoneItem[data-status="normal"] .zoneDot { background: var(--color-green); }
+.zoneItem[data-status="warning"] .zoneDot { background: var(--color-yellow); }
+.zoneItem[data-status="critical"] .zoneDot { background: var(--color-red); }
+
+.zoneName {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
 }
+
+.zoneCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.zoneItem[data-status="warning"] .zoneCount { color: var(--color-yellow); }
+.zoneItem[data-status="critical"] .zoneCount { color: var(--color-red); }
 
 @media (max-width: 768px) {
   .infoPanel {

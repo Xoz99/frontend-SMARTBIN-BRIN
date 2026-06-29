@@ -1,7 +1,8 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Outfit } from 'next/font/google';
 import './globals.css';
 import BottomNav from '@/components/BottomNav';
+import { AuthProvider } from '@/context/AuthContext';
 
 const outfit = Outfit({ 
   subsets: ['latin'], 
@@ -15,6 +16,12 @@ export const metadata: Metadata = {
   description: 'Real-time waste management tracking system in Bandung.',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -23,8 +30,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={outfit.variable}>
-        {children}
-        <BottomNav />
+        <AuthProvider>
+          {children}
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

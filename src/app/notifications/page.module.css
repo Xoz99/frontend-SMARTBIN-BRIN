@@ -5,7 +5,7 @@
   padding: var(--spacing-md) 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 20px;
   padding-bottom: 100px;
 }
 
@@ -14,76 +14,69 @@
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  padding: 8px 4px 16px;
+  padding: 8px 2px 16px;
   border-bottom: 1px solid var(--border-color);
-}
-
-.panel {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
-  flex: 1;
 }
 
 .headerTitle {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .headerTitle h1 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
-.backButton {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
+.subtitle {
+  font-size: 13px;
   color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.backButton:hover {
-  background: var(--bg-color);
-  color: var(--text-primary);
+  margin-top: 2px;
 }
 
 .markReadBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--color-green);
-  padding: 10px 16px;
-  border-radius: 20px;
-  background: var(--color-green-light);
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 6px;
+  background: var(--color-green);
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s ease;
 }
 
-.markReadBtn:hover {
-  background: white;
-  border-color: var(--color-green);
+.markReadBtn:hover:not(:disabled) {
+  background: #3c7460;
 }
 
-.filterBar {
+.markReadBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.panel {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Filter — segmented control flat */
+.filterBar {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
   overflow-x: auto;
-  padding-bottom: 8px;
 }
 
 .filterBar::-webkit-scrollbar {
@@ -91,124 +84,198 @@
 }
 
 .filterBtn {
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 7px 14px;
+  border-radius: 5px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
-  background: white;
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
   white-space: nowrap;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
-.filterBtn.active {
-  background: var(--text-primary);
-  color: white;
-  border-color: var(--text-primary);
+.filterBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-color);
+}
+
+.filterBtn.active,
+.filterBtn.active:hover {
+  background: var(--color-green);
+  color: #fff;
 }
 
 .listContainer {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
+/* Notifikasi — kontainer flat, aksen garis kiri sesuai severity */
 .notifItem {
   display: flex;
-  gap: 16px;
-  padding: 20px 56px 20px 20px; /* Ditambah padding kanan agar tak terhalang titik biru */
-  border-radius: var(--border-radius-lg);
+  flex-direction: column;
+  border-radius: 10px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
+  border-left: 3px solid var(--border-color);
+  overflow: hidden;
+}
+
+.notifItem.critical { border-left-color: var(--color-red); }
+.notifItem.warning { border-left-color: var(--color-yellow); }
+.notifItem.normal { border-left-color: var(--color-green); }
+
+.resolvedItem {
+  opacity: 0.62;
+}
+
+/* Baris yang bisa diklik (toggle detail) */
+.notifRow {
+  display: flex;
+  gap: 14px;
   align-items: flex-start;
-  position: relative;
-  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease;
 }
 
-.notifItem:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+.notifRow:hover {
+  background: var(--bg-color);
 }
 
-.notifItem.unread {
-  background: white;
-}
-
-.notifItem.critical { border-left: 4px solid var(--color-red); }
-.notifItem.warning { border-left: 4px solid var(--color-yellow); }
-.notifItem.normal { border-left: 4px solid var(--color-green); }
-
+/* Ikon kecil berwarna, tanpa lingkaran besar */
 .notifIcon {
-  padding: 12px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: 1px;
+  flex-shrink: 0;
 }
 
-.critical .notifIcon { background: var(--color-red-light); color: var(--color-red); }
-.warning .notifIcon { background: var(--color-yellow-light); color: var(--color-yellow); }
-.normal .notifIcon { background: var(--color-green-light); color: var(--color-green); }
+.critical .notifIcon { color: var(--color-red); }
+.warning .notifIcon { color: var(--color-yellow); }
+.normal .notifIcon { color: var(--color-green); }
 
 .notifContent {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .notifHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
-.notifHeader h2 {
-  font-size: 16px;
-  font-weight: 700;
+.notifTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
+.unreadDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-green);
+  flex-shrink: 0;
+}
+
 .time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Pesan netral — tidak diwarnai merah/kuning lagi */
+.message {
   font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.caret {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: transform 0.15s ease;
+}
+
+.caret[data-open="true"] {
+  transform: rotate(180deg);
+  color: var(--text-secondary);
+}
+
+/* Panel detail saat dibuka */
+.notifDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 16px 16px 48px;
+  border-top: 1px solid var(--border-color);
+  margin-top: -1px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  padding-top: 8px;
+}
+
+.detailRow span {
   color: var(--text-tertiary);
   font-weight: 500;
 }
 
-.message {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  font-weight: 500;
+.detailRow strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
 }
 
-.critical .message { color: var(--color-red); }
-.warning .message { color: var(--color-yellow); }
-
-.unreadIndicator {
-  position: absolute;
-  top: 24px;
-  right: 20px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--color-blue);
-  box-shadow: 0 0 0 4px var(--color-blue-light);
+.statusNew {
+  color: var(--color-yellow);
 }
 
-/* Responsiveness */
+.statusRead {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-green);
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
+  .markReadBtn {
+    align-self: flex-start;
+  }
   .notifHeader {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
-  }
-  .unreadIndicator {
-    top: 16px;
-    right: 16px;
+    gap: 2px;
   }
 }

@@ -1,3 +1,6 @@
+/* Analytics — flat, data-first. Tanpa gradient, shadow glossy, atau hover melayang.
+   Hijau brand (#48846c) dipakai sebagai fill solid & aksen, bukan gradient. */
+
 .pageContainer {
   max-width: 1536px;
   width: 96%;
@@ -5,7 +8,7 @@
   padding: var(--spacing-md) 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 20px;
   padding-bottom: 120px;
 }
 
@@ -14,65 +17,70 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 24px;
-  padding: 8px 4px 16px;
+  padding: 8px 2px 16px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .headerTitle {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .header h1 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .header p {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
+/* Segmented control — flat, sudut tegas, active solid tanpa shadow */
 .periodFilter {
   display: inline-flex;
-  background: var(--bg-color);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 999px;
-  padding: 4px;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
 }
 
 .periodPill {
-  padding: 6px 14px;
-  border-radius: 999px;
+  padding: 6px 13px;
+  border-radius: 5px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.12s ease, color 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .periodPill:hover {
   color: var(--text-primary);
+  background: var(--bg-color);
 }
 
 .periodPillActive,
 .periodPillActive:hover {
   background: var(--color-green);
-  color: white;
-  box-shadow: 0 2px 6px rgba(72, 132, 108, 0.25);
+  color: #fff;
 }
 
 .periodPillWrap {
@@ -80,22 +88,16 @@
   display: inline-flex;
 }
 
-.periodPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .datePopover {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
   z-index: 30;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 16px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   min-width: 320px;
   display: flex;
   flex-direction: column;
@@ -120,7 +122,7 @@
 .dateRow input[type="date"] {
   padding: 8px 10px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
@@ -142,14 +144,14 @@
 
 .datePresetBtn {
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.12s ease, color 0.12s ease;
 }
 
 .datePresetBtn:hover {
@@ -160,113 +162,90 @@
 .dateApplyBtn {
   margin-left: auto;
   padding: 7px 16px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   background: var(--color-green);
-  color: white;
+  color: #fff;
   border: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.12s ease;
 }
 
 .dateApplyBtn:hover {
-  filter: brightness(1.05);
+  background: #3c7460;
 }
 
-.exportBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--color-green);
-  color: white;
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14px;
-  box-shadow: 0 4px 10px rgba(72, 132, 108, 0.2);
-  transition: all 0.15s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.exportBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(72, 132, 108, 0.3);
-}
-
+/* KPI cards — border tegas, tanpa shadow & hover melayang */
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .kpiCard {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 24px;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s;
-}
-
-.kpiCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.kpiIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--bg-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.kpiCard h3 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.kpiCard h2 {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-
-.trendUp { display: inline-flex; align-items: center; gap: 4px; color: var(--color-green); font-size: 13px; font-weight: 600; }
-.trendNeutral { color: var(--text-tertiary); font-size: 13px; font-weight: 600; }
-
-.chartPanel {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 32px;
+  border-left: 3px solid var(--color-green);
+  border-radius: 8px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
 }
 
-.panelHeader h2 {
-  font-size: 18px;
+.kpiEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+
+.kpiCard h2 {
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 32px;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.trendUp { display: inline-flex; align-items: center; gap: 4px; color: var(--color-green); font-size: 12px; font-weight: 600; }
+.trendNeutral { color: var(--text-tertiary); font-size: 12px; font-weight: 600; }
+
+.chartPanel {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.panelHeader h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.005em;
 }
 
 .barChartContainer {
   position: relative;
   height: 300px;
   width: 100%;
-  padding-left: 60px; /* Space for Y-Axis labels */
+  padding-left: 56px; /* ruang label sumbu Y */
 }
 
 .chartGridLines {
@@ -283,17 +262,13 @@
 }
 
 .chartGridLines span {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
   font-weight: 500;
   position: relative;
   width: 100%;
-  border-top: 1px dashed var(--border-color);
-  padding-top: 4px;
-}
-
-.chartGridLines span:last-child {
   border-top: 1px solid var(--border-color);
+  padding-top: 4px;
 }
 
 .chartBars {
@@ -303,7 +278,7 @@
   height: 100%;
   position: relative;
   z-index: 2;
-  padding-bottom: 24px; /* Space for X-Axis labels */
+  padding-bottom: 24px; /* ruang label sumbu X */
   padding-inline: 8px;
 }
 
@@ -311,7 +286,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   max-width: 56px;
   height: 100%;
@@ -320,41 +295,41 @@
 
 .barWrapper {
   width: 100%;
-  max-width: 40px;
+  max-width: 36px;
   height: 100%;
   background: transparent;
   display: flex;
   align-items: flex-end;
-  border-radius: 8px 8px 0 0;
 }
 
+/* Bar solid, sudut tegas, tanpa gradient & tanpa ganti warna ke biru saat hover */
 .barFill {
   width: 100%;
-  background: linear-gradient(to top, var(--color-green), #68b897);
-  border-radius: 6px 6px 0 0;
-  transition: all 0.4s ease-out;
+  background: var(--color-green);
+  border-radius: 3px 3px 0 0;
+  transition: background 0.12s ease;
   position: relative;
   cursor: pointer;
 }
 
 .barFill:hover {
-  background: linear-gradient(to top, var(--color-blue), #87bedb);
+  background: #3c7460;
 }
 
 .tooltip {
   position: absolute;
-  top: -30px;
+  top: -28px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--text-primary);
-  color: white;
-  padding: 4px 8px;
+  color: #fff;
+  padding: 3px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.15s;
   white-space: nowrap;
 }
 
@@ -364,38 +339,40 @@
 
 .barLabel {
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
-/* Charts row: bar (wider) + donut (narrower) */
+/* Baris chart: bar (lebih lebar) + donut (lebih sempit) */
 .chartsRow {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 24px;
+  gap: 16px;
 }
 
-/* Donut */
+/* Donut — isi tinggi panel & pusatkan agar tak ada ruang kosong di bawah */
 .donutWrapper {
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
+  gap: 24px;
+  flex: 1;
 }
 
 .donutSvg {
-  width: 180px;
-  height: 180px;
+  width: 190px;
+  height: 190px;
   flex-shrink: 0;
 }
 
 .donutCenterValue {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   fill: var(--text-primary);
 }
 
 .donutCenterLabel {
-  font-size: 12px;
+  font-size: 11px;
   fill: var(--text-tertiary);
   font-weight: 500;
 }
@@ -404,7 +381,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
 }
 
@@ -412,13 +389,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .legendDot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   flex-shrink: 0;
 }
 
@@ -431,27 +408,29 @@
 .legendValue {
   font-weight: 700;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Top Areas */
+/* Bin paling bermasalah */
 .areaList {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .areaItem {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
 }
 
 .areaRank {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   background: var(--bg-color);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
   font-weight: 700;
   font-size: 13px;
@@ -459,11 +438,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
-.areaItem:nth-child(1) .areaRank { background: #d1565a; color: white; }
-.areaItem:nth-child(2) .areaRank { background: #d89b3f; color: white; }
-.areaItem:nth-child(3) .areaRank { background: #f1c95c; color: #111; }
+.areaItem:nth-child(1) .areaRank { background: #d1565a; border-color: #d1565a; color: #fff; }
+.areaItem:nth-child(2) .areaRank { background: #d89b3f; border-color: #d89b3f; color: #fff; }
+.areaItem:nth-child(3) .areaRank { background: #e7c25a; border-color: #e7c25a; color: #4a3a10; }
 
 .areaBody {
   flex: 1;
@@ -482,28 +462,34 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--text-primary);
 }
 
 .areaFullCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
+/* Progress solid, tanpa gradient */
 .areaProgressBar {
   height: 6px;
-  background: #eef0ee;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .areaProgressFill {
   height: 100%;
-  background: linear-gradient(to right, var(--color-green), #68b897);
-  border-radius: 3px;
+  background: var(--color-green);
+  border-radius: 2px;
 }
 
 .areaMeta {
@@ -538,5 +524,25 @@
   .donutWrapper {
     flex-direction: column;
     gap: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header h1 {
+    font-size: 22px;
+  }
+  .kpiGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .chartPanel {
+    padding: 18px;
+  }
+  .barChartContainer {
+    height: 240px;
+    padding-left: 44px;
+  }
+  .kpiCard h2 {
+    font-size: 24px;
   }
 }

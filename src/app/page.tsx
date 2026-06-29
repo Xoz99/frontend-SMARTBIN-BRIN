@@ -1,122 +1,170 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { 
-  Trash2, AlertCircle, AlertTriangle, Truck, 
-  Clock, User, TrendingUp, Maximize2, Compass, Bell, Home as HomeIcon, BarChart2, Settings,
-  Thermometer, Droplets, BatteryMedium
-} from "lucide-react";
-import dynamic from 'next/dynamic';
+import {
+  WarningCircle, Warning,
+  Clock, User, ArrowsOut,
+  Scales, Wind, BatteryMedium, SignOut,
+} from "@phosphor-icons/react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRealtime } from "@/lib/useRealtime";
+import * as api from "@/lib/api";
+import type { Alert, Bin, Pickup } from "@/lib/types";
+import {
+  binStatus, binVolume, latestReading, timeAgo,
+  STATUS_LABEL, WARN_VOLUME, CRIT_VOLUME,
+} from "@/lib/binStatus";
 
-// Disable SSR for Map since window is not defined
-const MapTracker = dynamic(() => import('@/components/MapTracker'), { 
+const MapTracker = dynamic(() => import("@/components/MapTracker"), {
   ssr: false,
-  loading: () => <div className={styles.mapPlaceholder}>Loading Map...</div> 
+  loading: () => <div className={styles.mapPlaceholder}>Loading Map...</div>,
 });
 
-export default function Home() {
-  const [time, setTime] = useState("");
+const STATUS_CARD: Record<string, string> = {
+  critical: styles.redCard,
+  warning: styles.orangeCard,
+  normal: styles.greenCard ?? "",
+  unknown: "",
+};
 
-  useEffect(() => {
-    // Basic clock implementation
-    const updateTime = () => setTime(new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/:/g, '.'));
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+function isToday(iso: string | null) {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const n = new Date();
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+}
+
+export default function Home() {
+  const { user, logout } = useAuth();
+  const [time, setTime] = useState("");
+  const [bins, setBins] = useState<Bin[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [pickups, setPickups] = useState<Pickup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const [binsData, alertsData, pickupsData] = await Promise.all([
+        api.getBins(),
+        api.getAlerts({ resolved: false, limit: 50 }),
+        api.getPickups({ limit: 50 }),
+      ]);
+      setBins(binsData);
+      setAlerts(alertsData.alerts);
+      setPickups(pickupsData.pickups);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal memuat data");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  // Jam berjalan.
+  useEffect(() => {
+    const tick = () =>
+      setTime(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).replace(/:/g, "."));
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  // Refresh saat ada event realtime relevan.
+  useRealtime((event) => {
+    if (["BIN_UPDATE", "BIN_STATUS", "ALERT_NEW", "ALERT_RESOLVED", "PICKUP_COMPLETED", "PICKUP_CONFIRMED"].includes(event)) {
+      load();
+    }
+  });
+
+  // Statistik turunan.
+  const totalBins = bins.length;
+  const perluDikosongkan = bins.filter((b) => { const v = binVolume(b); return v !== null && v >= WARN_VOLUME; }).length;
+  const kritis = bins.filter((b) => { const v = binVolume(b); return v !== null && v >= CRIT_VOLUME; }).length;
+  const pickupHariIni = pickups.filter((p) => isToday(p.createdAt)).length;
+  const pickupSelesai = pickups.filter((p) => isToday(p.createdAt) && p.status === "SELESAI").length;
+  const pickupPending = pickupHariIni - pickupSelesai;
+
+  const dateLabel = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className={styles.dashboardContainer}>
-      
       {/* HEADER */}
       <header className={styles.header}>
         <div className={styles.greeting}>
-          <h1>Halo, Andrian! 👋</h1>
-          <p>Petugas Kebersihan • Bandung, Kamis, 12 Maret 2026</p>
+          <h1>Halo, {user?.name ?? "Petugas"}! 👋</h1>
+          <p>{user?.role === "ADMIN" ? "Administrator" : "Petugas Kebersihan"} • {user?.area?.name ?? "Semua Area"} • {dateLabel}</p>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.timeBadge}>
-            <Clock size={16} />
-            <span>{time || "23.19.05"}</span>
+            <Clock size={16} weight="regular" />
+            <span>{time || "--.--.--"}</span>
           </div>
+          <button className={styles.profileButton} onClick={logout} title="Keluar">
+            <SignOut size={18} weight="bold" />
+          </button>
           <button className={styles.profileButton}>
-            <User size={20} />
+            <User size={20} weight="fill" />
           </button>
         </div>
       </header>
 
+      {error && <div className={styles.errorBanner}>⚠ {error} <button onClick={load}>Coba lagi</button></div>}
+
       {/* METRICS GRID */}
       <section className={styles.metricsGrid}>
-        
         <div className={styles.statCard} data-type="active">
           <div className={styles.statHeader}>
             <span>Total Bin Aktif</span>
-            <div className={styles.statIconContainer}><Trash2 size={18} /></div>
           </div>
-          <div className={styles.statValue}>248</div>
-          <div className={styles.statFooter}>
-            <TrendingUp size={14} /> 12 bin baru bulan ini
-          </div>
+          <div className={styles.statValue}>{loading ? "…" : totalBins}</div>
+          <div className={styles.statFooter}>{bins.filter((b) => b.status === "online").length} online</div>
         </div>
 
         <div className={styles.statCard} data-type="warning">
           <div className={styles.statHeader}>
             <span>Perlu Dikosongkan</span>
-            <div className={styles.statIconContainer}><AlertCircle size={18} /></div>
           </div>
-          <div className={styles.statValue}>37</div>
-          <div className={styles.statFooter}>
-            <AlertCircle size={14} /> Kapasitas &gt;75%
-          </div>
+          <div className={styles.statValue}>{loading ? "…" : perluDikosongkan}</div>
+          <div className={styles.statFooter}>Kapasitas &gt;{WARN_VOLUME}%</div>
         </div>
 
         <div className={styles.statCard} data-type="critical">
           <div className={styles.statHeader}>
             <span>Status Kritis</span>
-            <div className={styles.statIconContainer}><AlertTriangle size={18} /></div>
           </div>
-          <div className={styles.statValue}>8</div>
-          <div className={styles.statFooter}>
-            <AlertTriangle size={14} /> Kapasitas &gt;90%
-          </div>
+          <div className={styles.statValue}>{loading ? "…" : kritis}</div>
+          <div className={styles.statFooter}>Kapasitas &gt;{CRIT_VOLUME}%</div>
         </div>
 
         <div className={styles.statCard} data-type="pickup">
           <div className={styles.statHeader}>
             <span>Pickup Hari Ini</span>
-            <div className={styles.statIconContainer}><Truck size={18} /></div>
           </div>
-          <div className={styles.statValue}>19</div>
-          <div className={styles.statFooter}>
-            <Truck size={14} /> 14 selesai • 5 pending
-          </div>
+          <div className={styles.statValue}>{loading ? "…" : pickupHariIni}</div>
+          <div className={styles.statFooter}>{pickupSelesai} selesai • {pickupPending} menunggu</div>
         </div>
-
       </section>
 
       {/* DUAL GRID - MAP & NOTIFS */}
       <section className={styles.mainGrid}>
-        
-        {/* Real-time Map Panel */}
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Peta Lokasi Real-time</h2>
-            <button className={styles.panelAction}><Maximize2 size={18} /></button>
+            <Link href="/explore" className={styles.panelAction}><ArrowsOut size={18} weight="bold" /></Link>
           </div>
           <div className={styles.mapPlaceholder}>
-             <MapTracker />
-             <div className={styles.mapLegend}>
-               <div className={styles.legendItem}>
-                 <span className={`${styles.legendDot} ${styles.normal}`}></span> Normal
-               </div>
-               <div className={styles.legendItem}>
-                 <span className={`${styles.legendDot} ${styles.warning}`}></span> Waspada
-               </div>
-               <div className={styles.legendItem}>
-                 <span className={`${styles.legendDot} ${styles.critical}`}></span> Kritis
-               </div>
-             </div>
+            <MapTracker bins={bins} />
+            <div className={styles.mapLegend}>
+              <div className={styles.legendItem}><span className={`${styles.legendDot} ${styles.normal}`}></span> Normal</div>
+              <div className={styles.legendItem}><span className={`${styles.legendDot} ${styles.warning}`}></span> Waspada</div>
+              <div className={styles.legendItem}><span className={`${styles.legendDot} ${styles.critical}`}></span> Kritis</div>
+            </div>
           </div>
         </div>
 
@@ -124,151 +172,94 @@ export default function Home() {
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Notifikasi Aktif</h2>
-            <span className={styles.panelBadge}>11 baru</span>
+            <span className={styles.panelBadge}>{alerts.length} baru</span>
           </div>
-          
           <div className={`${styles.notificationList} ${styles.noScrollbar}`}>
-            
-            <div className={styles.notificationItem} data-type="critical">
-              <div className={styles.notifIcon}><AlertTriangle size={18} /></div>
-              <div className={styles.notifContent}>
-                <div className={styles.notifHeader}>
-                  <div className={styles.notifTitle}>BIN-042 <span className={styles.notifLocation}>• Darmo Kali</span></div>
-                  <span className={styles.notifTime}>2m</span>
+            {!loading && alerts.length === 0 && (
+              <div className={styles.emptyState}>Tidak ada notifikasi aktif 🎉</div>
+            )}
+            {alerts.slice(0, 8).map((a) => {
+              const type = a.type === "FULL_VOLUME" || a.type === "FULL_WEIGHT" || a.type === "GAS_HIGH" ? "critical" : "warning";
+              return (
+                <div key={a.id} className={styles.notificationItem} data-type={type}>
+                  <div className={styles.notifIcon}>{type === "critical" ? <Warning size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}</div>
+                  <div className={styles.notifContent}>
+                    <div className={styles.notifHeader}>
+                      <div className={styles.notifTitle}>{a.bin?.nodeId ?? "Bin"} <span className={styles.notifLocation}>• {a.bin?.location ?? "-"}</span></div>
+                      <span className={styles.notifTime}>{timeAgo(a.createdAt)}</span>
+                    </div>
+                    <div className={styles.notifDesc}>{a.message}</div>
+                  </div>
                 </div>
-                <div className={styles.notifDesc}>Kapasitas 96% • Segera dikosongkan</div>
-              </div>
-            </div>
-
-            <div className={styles.notificationItem} data-type="warning">
-              <div className={styles.notifIcon}><AlertCircle size={18} /></div>
-              <div className={styles.notifContent}>
-                <div className={styles.notifHeader}>
-                  <div className={styles.notifTitle}>BIN-089 <span className={styles.notifLocation}>• Gubeng</span></div>
-                  <span className={styles.notifTime}>5m</span>
-                </div>
-                <div className={styles.notifDesc}>Kapasitas 78%</div>
-              </div>
-            </div>
-
-            <div className={styles.notificationItem} data-type="normal">
-              <div className={styles.notifIcon}><Trash2 size={18} /></div>
-              <div className={styles.notifContent}>
-                <div className={styles.notifHeader}>
-                  <div className={styles.notifTitle}>BIN-055 <span className={styles.notifLocation}>• Rungkut</span></div>
-                  <span className={styles.notifTime}>1j</span>
-                </div>
-                <div className={styles.notifDesc}>Pickup selesai • 0%</div>
-              </div>
-            </div>
-
-            <div className={styles.notificationItem} data-type="normal">
-              <div className={styles.notifIcon}><Trash2 size={18} /></div>
-              <div className={styles.notifContent}>
-                <div className={styles.notifHeader}>
-                  <div className={styles.notifTitle}>BIN-059 <span className={styles.notifLocation}>• Ciganitri</span></div>
-                  <span className={styles.notifTime}>1j</span>
-                </div>
-                <div className={styles.notifDesc}>Ganti Baterai berhasil • 100%</div>
-              </div>
-            </div>
-
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* BOTTOM SECTION - STATUS & JADWAL */}
       <section className={styles.mainGrid}>
-        {/* Status Bin - Tampilan Cepat */}
+        {/* Status Bin */}
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Status Bin – Tampilan Cepat</h2>
           </div>
           <div className={styles.statusBinGrid}>
-            
-            <div className={`${styles.statusBinCard} ${styles.redCard}`}>
-              <div className={styles.binId}>BIN-042</div>
-              <div className={styles.binLocation}>Darmo kali</div>
-              <div className={styles.binProgressHeader}>
-                <span>Terisi</span>
-                <span>75%</span>
-              </div>
-              <div className={styles.binProgressBar}>
-                <div className={styles.binProgressFill} style={{ width: '75%' }}></div>
-              </div>
-              <div className={styles.binMetrics}>
-                <span className={styles.binMetricPill}><Thermometer size={14} color="#d1565a" /> 48°C</span>
-                <span className={styles.binMetricPill}><Droplets size={14} color="#3b82f6" /> 60%</span>
-                <span className={styles.binMetricPill}><BatteryMedium size={14} color="#10b981" /> 88%</span>
-              </div>
-            </div>
-
-            <div className={`${styles.statusBinCard} ${styles.orangeCard}`}>
-              <div className={styles.binId}>BIN-089</div>
-              <div className={styles.binLocation}>Gubeng</div>
-              <div className={styles.binProgressHeader}>
-                <span>Terisi</span>
-                <span>65%</span>
-              </div>
-              <div className={styles.binProgressBar}>
-                <div className={styles.binProgressFill} style={{ width: '65%' }}></div>
-              </div>
-              <div className={styles.binMetrics}>
-                <span className={styles.binMetricPill}><Thermometer size={14} color="#d89b3f" /> 37°C</span>
-                <span className={styles.binMetricPill}><Droplets size={14} color="#3b82f6" /> 60%</span>
-                <span className={styles.binMetricPill}><BatteryMedium size={14} color="#10b981" /> 88%</span>
-              </div>
-            </div>
-
+            {!loading && bins.length === 0 && <div className={styles.emptyState}>Belum ada bin terdaftar.</div>}
+            {bins.map((bin) => {
+              const status = binStatus(bin);
+              const vol = binVolume(bin);
+              const r = latestReading(bin);
+              return (
+                <div key={bin.id} className={`${styles.statusBinCard} ${STATUS_CARD[status]}`}>
+                  <div className={styles.binId}>{bin.nodeId}</div>
+                  <div className={styles.binLocation}>{bin.location}</div>
+                  <div className={styles.binProgressHeader}>
+                    <span>Terisi • {STATUS_LABEL[status]}</span>
+                    <span>{vol !== null ? `${Math.round(vol)}%` : "–"}</span>
+                  </div>
+                  <div className={styles.binProgressBar}>
+                    <div className={styles.binProgressFill} style={{ width: `${vol ?? 0}%` }}></div>
+                  </div>
+                  <div className={styles.binMetrics}>
+                    <span className={styles.binMetricPill}><Scales size={14} weight="duotone" color="#5b7c99" /> {r?.weight != null ? `${r.weight}kg` : "–"}</span>
+                    <span className={styles.binMetricPill}><Wind size={14} weight="duotone" color="#c79a4a" /> {r?.gas != null ? `${r.gas}` : "–"}</span>
+                    <span className={styles.binMetricPill}><BatteryMedium size={14} weight="duotone" color="#48846c" /> {r?.battery != null ? `${r.battery}%` : "–"}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Jadwal Pickup */}
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h2 className={styles.panelTitle}>Jadwal Pickup</h2>
+            <h2 className={styles.panelTitle}>Pickup Terbaru</h2>
           </div>
           <div className={styles.pickupTableWrapper}>
             <table className={styles.pickupTable}>
               <thead>
-                <tr>
-                  <th>TRUK</th>
-                  <th>RUTE</th>
-                  <th>STATUS</th>
-                </tr>
+                <tr><th>BIN</th><th>PETUGAS</th><th>STATUS</th></tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>TRK-01</td>
-                  <td>Zona A • 6bin</td>
-                  <td className={styles.statusSelesai}>SELESAI</td>
-                </tr>
-                <tr>
-                  <td>TRK-02</td>
-                  <td>Zona B • 1bin</td>
-                  <td className={styles.statusPending}>PENDING</td>
-                </tr>
-                <tr>
-                  <td>TRK-03</td>
-                  <td>Zona C • 6bin</td>
-                  <td className={styles.statusSelesai}>SELESAI</td>
-                </tr>
-                <tr>
-                  <td>TRK-04</td>
-                  <td>Zona D • 6bin</td>
-                  <td className={styles.statusTransit}>TRANSIT</td>
-                </tr>
-                <tr>
-                  <td>TRK-05</td>
-                  <td>Zona E • 6bin</td>
-                  <td className={styles.statusSelesai}>SELESAI</td>
-                </tr>
+                {!loading && pickups.length === 0 && (
+                  <tr><td colSpan={3} style={{ textAlign: "center", color: "var(--text-tertiary)" }}>Belum ada pickup.</td></tr>
+                )}
+                {pickups.slice(0, 6).map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.bin?.nodeId ?? "-"}</td>
+                    <td>{p.petugas?.name ?? "-"}</td>
+                    <td className={p.status === "SELESAI" ? styles.statusSelesai : styles.statusPending}>
+                      {p.status === "SELESAI" ? "SELESAI" : "MENUNGGU"}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
       </section>
-
     </div>
   );
 }

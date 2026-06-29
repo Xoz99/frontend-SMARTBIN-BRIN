@@ -1,0 +1,159 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background: var(--bg-color);
+}
+
+/* Kartu — mengikuti gaya .panel di halaman lain */
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Header kartu — sejajar gaya .panelHeader (ikon + judul, garis bawah) */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--border-radius-md);
+  color: #fff;
+  background: var(--color-green);
+}
+
+.brandText h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.brandText p {
+  margin-top: 2px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: var(--bg-color);
+  color: var(--text-tertiary);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.inputBox:focus-within {
+  border-color: var(--color-green);
+  box-shadow: 0 0 0 3px var(--color-green-light);
+}
+
+.inputBox input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: 12px;
+  margin-top: var(--spacing-sm);
+  border: none;
+  border-radius: var(--border-radius-md);
+  background: var(--color-green);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.submit:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(72, 132, 108, 0.22);
+  transform: translateY(-1px);
+}
+
+.submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error {
+  padding: 10px var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-red-light);
+  color: var(--color-red);
+  font-size: 0.85rem;
+  border: 1px solid #f0d4d5;
+}
+
+.hint {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-xs);
+}
+
+.hint code {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

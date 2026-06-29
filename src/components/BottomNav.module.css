@@ -37,7 +37,23 @@
 
 @media (max-width: 768px) {
   .bottomNavWrapper {
-    width: 90%;
+    width: auto;
+    max-width: calc(100% - 24px);
+    gap: 4px;
+    padding: 6px 10px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     justify-content: space-between;
+  }
+  .navItem {
+    width: 46px;
+    height: 46px;
+    border-radius: 23px;
+  }
+}
+
+@media (max-width: 360px) {
+  .navItem {
+    width: 42px;
+    height: 42px;
   }
 }

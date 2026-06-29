@@ -418,6 +418,43 @@
 .statusBinCard.orangeCard .binProgressFill { background-color: #d89b3f; }
 .statusBinCard.orangeCard .binMetricPill { border-color: #d89b3f; color: #111; }
 
+.statusBinCard.greenCard {
+  background: #f0f6f2;
+  border-color: #48846c;
+}
+.statusBinCard.greenCard .binProgressFill { background-color: #48846c; }
+.statusBinCard.greenCard .binMetricPill { border-color: #48846c; color: #111; }
+
+/* Banner error & empty state (ditambahkan untuk data live) */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--border-radius-sm);
+  background: var(--color-red-light);
+  color: var(--color-red);
+  border: 1px solid #f0d4d5;
+  font-size: 14px;
+}
+.errorBanner button {
+  margin-left: auto;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.emptyState {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
 .binId {
   font-family: monospace;
   color: var(--text-tertiary);
@@ -547,5 +584,34 @@
   .bottomNavWrapper {
     width: 90%;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 600px) {
+  .metricsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .greeting h1 {
+    font-size: 22px;
+  }
+  .statCard {
+    min-height: 120px;
+    padding: var(--spacing-md);
+  }
+  .statValue {
+    font-size: 32px;
+  }
+  .panel {
+    padding: var(--spacing-md);
+  }
+  .statusBinGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
   }
 }
