@@ -3,13 +3,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Trash, Plus, PencilSimple, MapPin, X, CircleNotch, FloppyDisk, ShieldWarning, Stack, Check, MagnifyingGlass,
-  Scales, Wind, BatteryMedium, Gauge, WifiHigh, WifiSlash, Clock,
+  Scales, Wind, BatteryMedium, Gauge, WifiHigh, WifiSlash, Clock, ArrowSquareOut,
 } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
-import type { Area, Bin } from "@/lib/types";
-import { binVolume, binStatus, STATUS_LABEL, latestReading, timeAgo } from "@/lib/binStatus";
+import { useRealtime } from "@/lib/useRealtime";
+import type { Area, Bin, SensorReading } from "@/lib/types";
+import { binVolume, binStatus, STATUS_LABEL, latestReading, timeAgo, liveBattery, formatWeight } from "@/lib/binStatus";
 import styles from "./page.module.css";
 
 interface FormState {
@@ -77,6 +78,40 @@ export default function BinsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Realtime via WebSocket: setiap paket sensor (BIN_UPDATE) langsung memperbarui
+  // bacaan `latest` bin terkait — nilai berat/volume/baterai/RSSI & status online
+  // ikut segar tanpa reload. BIN_STATUS memperbarui online/offline.
+  useRealtime((event, payload) => {
+    if (event === "BIN_UPDATE") {
+      const binId = payload.binId as string | undefined;
+      const nodeId = payload.nodeId as string | undefined;
+      const reading: SensorReading = {
+        weight: (payload.weight as number) ?? null,
+        weightRaw: (payload.weightRaw as number) ?? null,
+        volume: (payload.volume as number) ?? null,
+        battery: (payload.battery as number) ?? null,
+        gas: (payload.gas as number) ?? null,
+        rssi: (payload.rssi as number) ?? null,
+        snr: (payload.snr as number) ?? null,
+        packetLen: (payload.packetLen as number) ?? null,
+        createdAt: (payload.timestamp as string) ?? new Date().toISOString(),
+      };
+      setBins((prev) => prev.map((b) =>
+        (binId && b.id === binId) || (nodeId && b.nodeId === nodeId)
+          ? { ...b, latest: reading, lastSeen: reading.createdAt ?? null, status: "online" }
+          : b,
+      ));
+    } else if (event === "BIN_STATUS") {
+      const binId = payload.binId as string | undefined;
+      const nodeId = payload.nodeId as string | undefined;
+      const status = payload.status as ("online" | "offline") | undefined;
+      if (!status) return;
+      setBins((prev) => prev.map((b) =>
+        (binId && b.id === binId) || (nodeId && b.nodeId === nodeId) ? { ...b, status } : b,
+      ));
+    }
+  });
 
   const openCreate = () => {
     setEditing(null);
@@ -236,65 +271,76 @@ export default function BinsPage() {
         <span className={styles.searchCount}>{filteredBins.length} dari {bins.length} bin</span>
       </div>
 
-      {/* Tabel bin */}
-      <div className={styles.tablePanel}>
-        <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>NODE ID</th>
-              <th>LOKASI</th>
-              <th>AREA</th>
-              <th>KOORDINAT</th>
-              <th>STATUS</th>
-              {isAdmin && <th className={styles.actionsCol}>AKSI</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan={isAdmin ? 6 : 5} className={styles.tableEmpty}>Memuat…</td></tr>
-            )}
-            {!loading && bins.length === 0 && (
-              <tr><td colSpan={isAdmin ? 6 : 5} className={styles.tableEmpty}>Belum ada bin terdaftar.</td></tr>
-            )}
-            {!loading && bins.length > 0 && filteredBins.length === 0 && (
-              <tr><td colSpan={isAdmin ? 6 : 5} className={styles.tableEmpty}>Tidak ada bin yang cocok dengan &quot;{query}&quot;.</td></tr>
-            )}
-            {!loading && filteredBins.map((bin) => {
-              const vol = binVolume(bin);
-              const status = binStatus(bin);
-              return (
-                <tr key={bin.id} className={styles.clickableRow} onClick={() => setDetailId(bin.id)}>
-                  <td className={styles.nodeCell}>{bin.nodeId}</td>
-                  <td>{bin.location}</td>
-                  <td>{bin.area?.name ?? <span className={styles.muted}>—</span>}</td>
-                  <td>
-                    <span className={styles.coordCell}>
-                      <MapPin size={13} weight="fill" color="#48846c" /> {Number(bin.lat).toFixed(4)}, {Number(bin.lng).toFixed(4)}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`${styles.statusPill} ${styles[status]}`}>
-                      {STATUS_LABEL[status]}{vol !== null ? ` · ${Math.round(vol)}%` : ""}
-                    </span>
-                  </td>
+      {/* Grid kartu bin */}
+      {loading ? (
+        <div className={styles.stateBox}>Memuat…</div>
+      ) : bins.length === 0 ? (
+        <div className={styles.stateBox}>Belum ada bin terdaftar.</div>
+      ) : filteredBins.length === 0 ? (
+        <div className={styles.stateBox}>Tidak ada bin yang cocok dengan &quot;{query}&quot;.</div>
+      ) : (
+        <div className={styles.binGrid}>
+          {filteredBins.map((bin) => {
+            const vol = binVolume(bin);
+            const status = binStatus(bin);
+            const r = latestReading(bin);
+            const online = bin.status === "online";
+            return (
+              <article key={bin.id} className={`${styles.binCard} ${styles[status]}`} onClick={() => setDetailId(bin.id)}>
+                <div className={styles.cardTop}>
+                  <span className={styles.cardId}>
+                    <span className={`${styles.statusDot} ${styles[status]}`} /> {bin.nodeId}
+                  </span>
                   {isAdmin && (
-                    <td className={styles.actionsCol}>
+                    <span className={styles.cardActions}>
                       <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); openEdit(bin); }} title="Ubah">
-                        <PencilSimple size={16} />
+                        <PencilSimple size={15} />
                       </button>
                       <button className={`${styles.iconBtn} ${styles.danger}`} onClick={(e) => { e.stopPropagation(); remove(bin); }} title="Hapus">
-                        <Trash size={16} />
+                        <Trash size={15} />
                       </button>
-                    </td>
+                    </span>
                   )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                </div>
+
+                <span className={styles.cardLoc}>
+                  <MapPin size={13} weight="fill" color="#48846c" /> {bin.location}
+                </span>
+
+                <div className={styles.cardCap}>
+                  <div className={styles.cardCapHead}>
+                    <span className={`${styles.statusPill} ${styles[status]}`}>{STATUS_LABEL[status]}</span>
+                    <span className={styles.cardPct}>{vol !== null ? `${Math.round(vol)}%` : "–"}</span>
+                  </div>
+                  <div className={styles.capBar}>
+                    <div className={`${styles.capFill} ${styles[status]}`} style={{ width: `${vol ?? 0}%` }} />
+                  </div>
+                </div>
+
+                <div className={styles.cardMeta}>
+                  <span className={styles.cardMetaItem}>
+                    <Scales size={14} weight="duotone" color="#48846c" />{formatWeight(r?.weightRaw) ?? "–"}
+                  </span>
+                  <span className={styles.cardMetaItem}>
+                    <BatteryMedium size={14} weight="duotone" color="#c79a4a" />{liveBattery(bin) != null ? `${Math.round(liveBattery(bin)!)}%` : "–"}
+                  </span>
+                  <span className={styles.cardMetaItem}>
+                    {online ? <WifiHigh size={14} weight="bold" color="#48846c" /> : <WifiSlash size={14} weight="bold" color="#9ea5ad" />}
+                    {online ? "Online" : "Offline"}
+                  </span>
+                </div>
+
+                <div className={styles.cardFoot}>
+                  <span className={styles.cardArea}>{bin.area?.name ?? "Tanpa area"}</span>
+                  <span className={styles.cardTime}>
+                    <Clock size={12} weight="regular" /> {timeAgo(r?.timestamp ?? r?.createdAt)}
+                  </span>
+                </div>
+              </article>
+            );
+          })}
         </div>
-      </div>
+      )}
 
       {/* Modal tambah/edit */}
       {open && (
@@ -465,7 +511,7 @@ export default function BinsPage() {
               <div className={styles.metricGrid}>
                 <div className={styles.metricCard}>
                   <span className={styles.metricLabel}><Scales size={15} weight="duotone" color="#48846c" /> Berat</span>
-                  <span className={styles.metricValue}>{r?.weight != null ? `${r.weight} kg` : "–"}</span>
+                  <span className={styles.metricValue}>{formatWeight(r?.weightRaw) ?? "–"}</span>
                 </div>
                 <div className={styles.metricCard}>
                   <span className={styles.metricLabel}><Wind size={15} weight="duotone" color="#5b7c99" /> Gas</span>
@@ -473,7 +519,7 @@ export default function BinsPage() {
                 </div>
                 <div className={styles.metricCard}>
                   <span className={styles.metricLabel}><BatteryMedium size={15} weight="duotone" color="#c79a4a" /> Baterai</span>
-                  <span className={styles.metricValue}>{r?.battery != null ? `${r.battery}%` : "–"}</span>
+                  <span className={styles.metricValue}>{liveBattery(detailBin) != null ? `${Math.round(liveBattery(detailBin)!)}%` : "–"}</span>
                 </div>
                 <div className={styles.metricCard}>
                   <span className={styles.metricLabel}><Gauge size={15} weight="duotone" color="#48846c" /> Volume</span>
@@ -484,7 +530,19 @@ export default function BinsPage() {
               {/* Info detail */}
               <div className={styles.infoList}>
                 <div className={styles.infoRow}><span>Area</span><strong>{detailBin.area?.name ?? "—"}</strong></div>
-                <div className={styles.infoRow}><span>Koordinat</span><strong>{Number(detailBin.lat).toFixed(5)}, {Number(detailBin.lng).toFixed(5)}</strong></div>
+                <div className={styles.infoRow}>
+                  <span>Koordinat</span>
+                  <a
+                    className={styles.mapLink}
+                    href={`https://www.google.com/maps/search/?api=1&query=${detailBin.lat},${detailBin.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Buka di Google Maps"
+                  >
+                    {Number(detailBin.lat).toFixed(5)}, {Number(detailBin.lng).toFixed(5)}
+                    <ArrowSquareOut size={14} weight="bold" />
+                  </a>
+                </div>
                 <div className={styles.infoRow}><span>Ambang volume</span><strong>{detailBin.volumeThreshold ?? 80}%</strong></div>
                 <div className={styles.infoRow}><span>Ambang berat</span><strong>{detailBin.weightThreshold != null ? `${detailBin.weightThreshold} kg` : "—"}</strong></div>
                 <div className={styles.infoRow}><span>Ambang gas</span><strong>{detailBin.gasThreshold ?? "—"}</strong></div>

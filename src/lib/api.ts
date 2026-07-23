@@ -12,6 +12,7 @@ import type {
   Pagination,
   Pickup,
   PickupStatus,
+  SensorReading,
   User,
   WasteLabel,
   WeeklyVolumePoint,
@@ -103,6 +104,12 @@ export async function getMe() {
 export async function getBins() {
   const { data } = await request<Bin[]>("/bins");
   return data ?? [];
+}
+
+// Riwayat SensorLog sebuah bin (terbaru dulu). Termasuk metrik LoRa rssi/snr/packetLen.
+export async function getBinHistory(id: string, limit = 200) {
+  const { data } = await request<SensorReading[]>(`/bins/${id}/history?limit=${limit}`);
+  return data;
 }
 
 export async function getBin(id: string) {

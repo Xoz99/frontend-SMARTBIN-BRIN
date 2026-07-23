@@ -15,7 +15,7 @@ import * as api from "@/lib/api";
 import type { Alert, Bin, Pickup } from "@/lib/types";
 import {
   binStatus, binVolume, latestReading, timeAgo,
-  STATUS_LABEL, WARN_VOLUME, CRIT_VOLUME,
+  STATUS_LABEL, WARN_VOLUME, CRIT_VOLUME, liveBattery, formatWeight,
 } from "@/lib/binStatus";
 
 const MapTracker = dynamic(() => import("@/components/MapTracker"), {
@@ -222,9 +222,9 @@ export default function Home() {
                     <div className={styles.binProgressFill} style={{ width: `${vol ?? 0}%` }}></div>
                   </div>
                   <div className={styles.binMetrics}>
-                    <span className={styles.binMetricPill}><Scales size={14} weight="duotone" color="#5b7c99" /> {r?.weight != null ? `${r.weight}kg` : "–"}</span>
+                    <span className={styles.binMetricPill}><Scales size={14} weight="duotone" color="#5b7c99" /> {formatWeight(r?.weightRaw) ?? "–"}</span>
                     <span className={styles.binMetricPill}><Wind size={14} weight="duotone" color="#c79a4a" /> {r?.gas != null ? `${r.gas}` : "–"}</span>
-                    <span className={styles.binMetricPill}><BatteryMedium size={14} weight="duotone" color="#48846c" /> {r?.battery != null ? `${r.battery}%` : "–"}</span>
+                    <span className={styles.binMetricPill}><BatteryMedium size={14} weight="duotone" color="#48846c" /> {liveBattery(bin) != null ? `${Math.round(liveBattery(bin)!)}%` : "–"}</span>
                   </div>
                 </div>
               );

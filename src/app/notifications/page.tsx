@@ -94,19 +94,6 @@ export default function NotificationsPage() {
     if (willOpen && !n.resolved && busy !== n.id) resolve(n.id);
   };
 
-  const resolveAll = async () => {
-    const unresolved = alerts.filter((a) => !a.resolved);
-    setBusy("all");
-    try {
-      await Promise.all(unresolved.map((a) => api.resolveAlert(a.id)));
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menandai semua");
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const unreadCount = alerts.filter((a) => !a.resolved).length;
 
   const filtered = alerts.filter((a) => {
@@ -127,9 +114,6 @@ export default function NotificationsPage() {
             <p className={styles.subtitle}>{unreadCount} belum diselesaikan dari {alerts.length} total</p>
           </div>
         </div>
-        <button className={styles.markReadBtn} onClick={resolveAll} disabled={busy === "all" || unreadCount === 0}>
-          <CheckCircle size={16} weight="bold" /> {busy === "all" ? "Memproses…" : "Selesaikan semua"}
-        </button>
       </header>
 
       <div className={styles.panel}>

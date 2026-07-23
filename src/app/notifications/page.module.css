@@ -113,20 +113,15 @@
   gap: 10px;
 }
 
-/* Notifikasi — kontainer flat, aksen garis kiri sesuai severity */
+/* Notifikasi — kontainer flat, severity ditandai lewat ikon berwarna */
 .notifItem {
   display: flex;
   flex-direction: column;
   border-radius: 10px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-left: 3px solid var(--border-color);
   overflow: hidden;
 }
-
-.notifItem.critical { border-left-color: var(--color-red); }
-.notifItem.warning { border-left-color: var(--color-yellow); }
-.notifItem.normal { border-left-color: var(--color-green); }
 
 .resolvedItem {
   opacity: 0.62;

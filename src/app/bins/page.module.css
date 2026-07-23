@@ -57,13 +57,12 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.15s, opacity 0.15s;
+  transition: background 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
 
 .primaryBtn:hover:not(:disabled) {
-  box-shadow: 0 8px 20px rgba(72, 132, 108, 0.22);
-  transform: translateY(-1px);
+  background: #3c7460;
 }
 
 .primaryBtn:disabled { opacity: 0.6; cursor: default; }
@@ -176,71 +175,118 @@
   flex-shrink: 0;
 }
 
-/* ── Tabel ───────────────────────────────────────────────────────────── */
-.tablePanel {
+/* ── Grid kartu bin ──────────────────────────────────────────────────── */
+.binGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.stateBox {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
 }
 
-/* Scroll horizontal agar kolom tidak terpotong di layar sempit */
-.tableScroll {
-  width: 100%;
-  overflow-x: auto;
+.binCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease;
 }
 
-.table {
-  width: 100%;
-  min-width: 760px;
-  border-collapse: collapse;
-  font-size: 14px;
+.binCard:hover { border-color: #ccc; background: var(--bg-color); }
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.table thead th {
-  text-align: left;
-  padding: 14px 20px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-  background: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.table tbody td {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-primary);
-  vertical-align: middle;
-}
-
-.table tbody tr:last-child td { border-bottom: none; }
-.table tbody tr:hover { background: var(--bg-color); }
-
-.clickableRow { cursor: pointer; }
-
-.tableEmpty {
-  text-align: center;
-  color: var(--text-tertiary);
-  padding: 32px !important;
-}
-
-.nodeCell {
-  font-weight: 700;
+.cardId {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: monospace;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
 }
 
-.coordCell {
+.statusDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.statusDot.normal { background: #48846c; }
+.statusDot.warning { background: #d89b3f; }
+.statusDot.critical { background: #d1565a; }
+.statusDot.unknown { background: #9ea5ad; }
+
+.cardActions { display: inline-flex; gap: 6px; }
+
+.cardLoc {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.cardCap { display: flex; flex-direction: column; gap: 7px; }
+
+.cardCapHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardPct {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.cardMetaItem {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-secondary);
-  font-size: 13px;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+}
+
+.cardFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cardArea { font-size: 12px; font-weight: 600; color: var(--text-tertiary); }
+.cardTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
 
 .muted { color: var(--text-tertiary); }
@@ -259,14 +305,11 @@
 .statusPill.critical { background: var(--color-red-light); color: var(--color-red); }
 .statusPill.unknown { background: var(--bg-color); color: var(--text-tertiary); }
 
-.actionsCol { text-align: right; white-space: nowrap; }
-
 .iconBtn {
   display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  margin-left: 6px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   background: var(--card-bg);
@@ -577,6 +620,19 @@
 .infoRow span { color: var(--text-secondary); }
 .infoRow strong { color: var(--text-primary); font-weight: 600; text-align: right; }
 
+.mapLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-green);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  transition: color 0.14s ease;
+}
+
+.mapLink:hover { color: #3c7460; text-decoration: underline; }
+
 /* Aksi drawer */
 .drawerActions {
   display: flex;
@@ -682,7 +738,7 @@
   .headerActions { width: 100%; }
   .headerActions .primaryBtn,
   .headerActions .secondaryBtn { flex: 1; justify-content: center; }
-  .coordCell { font-size: 12px; }
+  .binGrid { grid-template-columns: 1fr; }
   /* Modal & drawer: penuh-lebar yang nyaman di layar kecil */
   .modal { width: 96%; padding: 20px; }
   .drawer { width: 100%; max-width: 100%; }

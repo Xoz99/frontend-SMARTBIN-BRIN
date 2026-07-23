@@ -21,10 +21,20 @@ export interface User {
 
 export interface SensorReading {
   weight: number | null;
+  // Berat timbangan live dari hardware (kg). weight = berat terkonfirmasi
+  // (mode sensor_pairing) yang tetap 0 sampai ada setoran ter-pair; untuk
+  // menampilkan bacaan timbangan aktual, pakai weightRaw.
+  weightRaw?: number | null;
   volume: number | null;
   battery: number | null;
   gas: number | null;
   rssi: number | null;
+  snr?: number | null; // dB — LoRa signal-to-noise ratio
+  packetLen?: number | null; // bytes — panjang paket RF diterima
+  transport?: "lora" | "http" | null; // jalur data sampai ke backend
+  seq?: number | null; // nomor urut paket dari device (packet loss)
+  latencyMs?: number | null; // ms — latency device→backend
+  throughputBps?: number | null; // bit/detik — throughput jalur (diukur di gateway)
   timestamp?: string;
   createdAt?: string;
   logId?: string;

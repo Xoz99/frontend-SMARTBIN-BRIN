@@ -186,7 +186,6 @@
 .kpiCard {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-left: 3px solid var(--color-green);
   border-radius: 8px;
   padding: 18px 20px;
   display: flex;

@@ -37,14 +37,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-      try {
-        const me = await api.getMe();
-        if (active) setUser(me);
-      } catch {
-        api.setToken(null); // token kadaluarsa/invalid
-      } finally {
-        if (active) setLoading(false);
+      // Coba pulihkan sesi, dengan retry untuk kegagalan SEMENTARA
+      // (jaringan/timeout/5xx). Token HANYA dibuang saat autentikasi
+      // benar-benar gagal (401/403) — bukan saat backend sesaat tak
+      // terjangkau — supaya spam-refresh tidak menendang user ke /login.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const me = await api.getMe();
+          if (active) setUser(me);
+          break;
+        } catch (e) {
+          const isAuthError =
+            e instanceof api.ApiError && (e.status === 401 || e.status === 403);
+          if (isAuthError) {
+            api.setToken(null); // token kadaluarsa/invalid → logout sah
+            break;
+          }
+          // Kegagalan sementara: tahan token, tunggu sebentar, coba lagi.
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+          }
+        }
       }
+      if (active) setLoading(false);
     })();
     return () => {
       active = false;

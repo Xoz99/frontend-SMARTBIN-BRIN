@@ -6,7 +6,9 @@ import { TrendUp, CalendarDots, MapPin, Warning } from "@phosphor-icons/react";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
-import type { Alert, Bin, ClassificationSummary, Deposit, WasteLabel, WeeklyVolumePoint } from "@/lib/types";
+import type { Alert, Bin, ClassificationSummary, Deposit, SensorReading, WasteLabel, WeeklyVolumePoint } from "@/lib/types";
+import SignalChart from "@/components/SignalChart";
+import CompareChart from "@/components/CompareChart";
 
 // Warna & urutan tampil jenis sampah.
 const WASTE_META: { label: WasteLabel; name: string; color: string }[] = [
@@ -25,6 +27,13 @@ function todayISO() { return new Date().toISOString().slice(0, 10); }
 function daysAgoISO(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); }
 
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+// Format throughput bit/detik → "– / bps / kbps" biar ringkas di tabel.
+function fmtBps(v: number | null | undefined) {
+  if (v == null) return "–";
+  if (v >= 1000) return `${(v / 1000).toFixed(1)} kbps`;
+  return `${v.toFixed(0)} bps`;
+}
 
 export default function AnalyticsPage() {
   const periods = ["Hari ini", "Minggu ini", "Bulan ini", "Custom"] as const;
@@ -45,6 +54,12 @@ export default function AnalyticsPage() {
   const [summary, setSummary] = useState<ClassificationSummary | null | false>(null);
   const [tick, setTick] = useState(0);
   const summaryUnsupported = useRef(false);
+
+  // ── Penelitian kualitas link LoRa (RSSI/SNR/panjang paket per bin) ──
+  const [selectedBinId, setSelectedBinId] = useState<string>("");
+  const [signalHistory, setSignalHistory] = useState<SensorReading[]>([]);
+  const [signalLoading, setSignalLoading] = useState(false);
+  const [signalUnsupported, setSignalUnsupported] = useState(false);
 
   useEffect(() => { setCustomStart(daysAgoISO(7)); setCustomEnd(todayISO()); }, []);
 
@@ -90,9 +105,30 @@ export default function AnalyticsPage() {
 
   // Refetch tiap kali periode (from/to) berubah.
   useEffect(() => { load(); }, [load]);
-  // Setiap pemilah memilah (CLASSIFICATION_NEW) atau ada setoran, muat ulang.
-  useRealtime((event) => {
+  // Realtime: pemilahan → muat ulang analitik; BIN_UPDATE (tiap paket sensor) →
+  // tambah titik grafik LoRa secara live tanpa refetch.
+  useRealtime((event, payload) => {
     if (event === "CLASSIFICATION_NEW") { load(); setTick((t) => t + 1); }
+    else if (event === "BIN_UPDATE") {
+      const binId = payload.binId as string | undefined;
+      if (!binId || binId !== selectedBinId) return;
+      const point: SensorReading = {
+        weight: (payload.weight as number) ?? null,
+        volume: (payload.volume as number) ?? null,
+        battery: (payload.battery as number) ?? null,
+        gas: (payload.gas as number) ?? null,
+        rssi: (payload.rssi as number) ?? null,
+        snr: (payload.snr as number) ?? null,
+        packetLen: (payload.packetLen as number) ?? null,
+        transport: (payload.transport as "lora" | "http") ?? null,
+        seq: (payload.seq as number) ?? null,
+        latencyMs: (payload.latencyMs as number) ?? null,
+        throughputBps: (payload.throughputBps as number) ?? null,
+        createdAt: (payload.timestamp as string) ?? new Date().toISOString(),
+      };
+      // Riwayat disimpan terbaru-dulu (sesuai endpoint). Prepend & batasi 200.
+      setSignalHistory((prev) => [point, ...prev].slice(0, 200));
+    }
   });
 
   useEffect(() => {
@@ -127,6 +163,32 @@ export default function AnalyticsPage() {
     })();
     return () => { active = false; };
   }, [from, to, tick]);
+
+  // Default pilih bin-003 (node LoRa) begitu daftar bin termuat; kalau tak ada, bin pertama.
+  useEffect(() => {
+    if (selectedBinId || bins.length === 0) return;
+    const preferred = bins.find((b) => b.nodeId === "bin-003") ?? bins[0];
+    if (preferred) setSelectedBinId(preferred.id);
+  }, [bins, selectedBinId]);
+
+  // Muat riwayat sinyal (rssi/snr/packetLen) untuk bin terpilih. Refetch saat
+  // bin berubah atau ada data realtime baru (tick).
+  useEffect(() => {
+    if (!selectedBinId) return;
+    let active = true;
+    setSignalLoading(true);
+    (async () => {
+      try {
+        const rows = await api.getBinHistory(selectedBinId, 200);
+        if (active) setSignalHistory(rows);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404 && active) setSignalUnsupported(true);
+      } finally {
+        if (active) setSignalLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [selectedBinId, tick]);
 
   const inRange = (iso: string | null) => {
     if (!iso) return false;
@@ -171,6 +233,68 @@ export default function AnalyticsPage() {
     [weekly],
   );
   const maxKg = Math.max(1, ...weeklyData.map((d) => d.value));
+
+  // ── Turunan metrik LoRa dari riwayat sensor (urut kronologis naik) ──
+  const lora = useMemo(() => {
+    const rows = [...signalHistory]
+      .map((r) => ({ ...r, ts: new Date(r.createdAt ?? r.timestamp ?? 0).getTime() }))
+      .filter((r) => r.ts > 0)
+      .sort((a, b) => a.ts - b.ts);
+
+    const rssi = rows.filter((r) => r.rssi != null && r.rssi !== -999).map((r) => ({ t: r.ts, v: r.rssi as number }));
+    const snr = rows.filter((r) => r.snr != null).map((r) => ({ t: r.ts, v: r.snr as number }));
+    const len = rows.filter((r) => r.packetLen != null).map((r) => ({ t: r.ts, v: r.packetLen as number }));
+
+    const packets = rows.length;
+    const spanSec = packets >= 2 ? (rows[packets - 1].ts - rows[0].ts) / 1000 : 0;
+    const perMin = spanSec > 0 ? (packets - 1) / (spanSec / 60) : 0;
+    const avgGap = packets >= 2 ? spanSec / (packets - 1) : 0;
+    const hasSnr = snr.length > 0;
+    const mean = (arr: { v: number }[]) => (arr.length ? arr.reduce((s, p) => s + p.v, 0) / arr.length : null);
+    const avgRssi = mean(rssi);
+    const avgSnr = mean(snr);
+
+    return { rssi, snr, len, packets, spanSec, perMin, avgGap, hasSnr, avgRssi, avgSnr };
+  }, [signalHistory]);
+
+  const selectedBin = bins.find((b) => b.id === selectedBinId);
+
+  // ── Perbandingan transport: LoRa vs HTTP/internet ──
+  const compare = useMemo(() => {
+    const rows = [...signalHistory]
+      .map((r) => ({ ...r, ts: new Date(r.createdAt ?? r.timestamp ?? 0).getTime() }))
+      .filter((r) => r.ts > 0);
+
+    const metricsFor = (tp: "lora" | "http") => {
+      const rs = rows.filter((r) => r.transport === tp).sort((a, b) => a.ts - b.ts);
+      const packets = rs.length;
+      const spanSec = packets >= 2 ? (rs[packets - 1].ts - rs[0].ts) / 1000 : 0;
+      const perMin = spanSec > 0 ? (packets - 1) / (spanSec / 60) : 0;
+      const gaps: number[] = [];
+      for (let i = 1; i < rs.length; i++) gaps.push((rs[i].ts - rs[i - 1].ts) / 1000);
+      const avgGap = gaps.length ? gaps.reduce((s, g) => s + g, 0) / gaps.length : 0;
+      const jitter = gaps.length ? Math.sqrt(gaps.reduce((s, g) => s + (g - avgGap) ** 2, 0) / gaps.length) : 0;
+      // packet loss dari seq (paket hilang = seq yang bolong)
+      const seqs = rs.map((r) => r.seq).filter((s): s is number => s != null);
+      let lossPct: number | null = null, expected = 0, received = seqs.length;
+      if (seqs.length >= 2) {
+        const uniq = new Set(seqs).size;
+        expected = Math.max(...seqs) - Math.min(...seqs) + 1;
+        received = uniq;
+        lossPct = expected > 0 ? Math.max(0, ((expected - uniq) / expected) * 100) : null;
+      }
+      const latSeries = rs.filter((r) => r.latencyMs != null).map((r) => ({ t: r.ts, v: r.latencyMs as number }));
+      const avgLat = latSeries.length ? latSeries.reduce((s, p) => s + p.v, 0) / latSeries.length : null;
+      // Throughput bit/detik (diukur di gateway: LoRa dari airtime RF, HTTP dari size/latency)
+      const tps = rs.filter((r) => r.throughputBps != null).map((r) => r.throughputBps as number);
+      const avgTp = tps.length ? tps.reduce((s, v) => s + v, 0) / tps.length : null;
+      return { packets, perMin, avgGap, jitter, lossPct, expected, received, latSeries, avgLat, avgTp };
+    };
+
+    const loraM = metricsFor("lora");
+    const httpM = metricsFor("http");
+    return { lora: loraM, http: httpM, hasAny: loraM.packets > 0 || httpM.packets > 0 };
+  }, [signalHistory]);
 
   // Bin yang paling sering kena alert dalam periode.
   const topBins = useMemo(() => {
@@ -241,17 +365,17 @@ export default function AnalyticsPage() {
 
       {/* KPI Cards (data nyata) */}
       <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard} style={{ borderLeftColor: "#48846c" }}>
+        <div className={styles.kpiCard}>
           <span className={styles.kpiEyebrow}>Total Sampah Terpilah</span>
           <h2>{loading ? "…" : `${totalDeposits} item`}</h2>
           <p className={styles.trendUp}><TrendUp size={13} weight="bold" /> {totalWeightKg ? `${totalWeightKg.toFixed(1)} kg total` : "berat belum tercatat"}</p>
         </div>
-        <div className={styles.kpiCard} style={{ borderLeftColor: "#c79a4a" }}>
+        <div className={styles.kpiCard}>
           <span className={styles.kpiEyebrow}>Jenis Paling Sering</span>
           <h2>{loading ? "…" : (mostCommon ? mostCommon.name : "–")}</h2>
           <p className={styles.trendNeutral}>{mostCommon ? `${mostCommon.count}× (${mostCommon.value}%) dari pemilah` : "Belum ada data pemilahan"}</p>
         </div>
-        <div className={styles.kpiCard} style={{ borderLeftColor: "#5b7c99" }}>
+        <div className={styles.kpiCard}>
           <span className={styles.kpiEyebrow}>Bin Terpantau / Alert Aktif</span>
           <h2>{loading ? "…" : `${bins.length} / ${alertAktif}`}</h2>
           <p className={styles.trendNeutral}>Total bin & alert belum selesai</p>
@@ -340,6 +464,127 @@ export default function AnalyticsPage() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* ── Kualitas Sinyal LoRa (untuk penelitian komunikasi) ── */}
+      <div className={styles.chartPanel}>
+        <div className={styles.panelHeader}>
+          <h2>Kualitas Sinyal LoRa {selectedBin ? `• ${selectedBin.nodeId}` : ""}</h2>
+          <select
+            value={selectedBinId}
+            onChange={(e) => setSelectedBinId(e.target.value)}
+            style={{ fontSize: 13, padding: "5px 10px", borderRadius: 8, border: "1px solid var(--border-color, #e5e7eb)", background: "var(--surface, #fff)", color: "var(--text-primary, #111)" }}
+          >
+            {bins.map((b) => (
+              <option key={b.id} value={b.id}>{b.nodeId} — {b.location}</option>
+            ))}
+          </select>
+        </div>
+
+        {signalUnsupported ? (
+          <p style={{ padding: 16, color: "var(--text-tertiary)" }}>
+            Endpoint riwayat (/bins/:id/history) belum tersedia di backend.
+          </p>
+        ) : (
+          <>
+            {/* Stat ringkas */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 16 }}>
+              {[
+                { label: "Paket diterima", value: `${lora.packets}`, sub: signalLoading ? "memuat…" : "sampel" },
+                { label: "Throughput", value: lora.perMin ? lora.perMin.toFixed(1) : "–", sub: "paket/menit" },
+                { label: "Jeda rata-rata", value: lora.avgGap ? lora.avgGap.toFixed(1) : "–", sub: "detik antar paket" },
+                { label: "RSSI rata-rata", value: lora.avgRssi != null ? lora.avgRssi.toFixed(0) : "–", sub: "dBm" },
+                { label: "SNR rata-rata", value: lora.avgSnr != null ? lora.avgSnr.toFixed(1) : "–", sub: "dB" },
+              ].map((s) => (
+                <div key={s.label} style={{ background: "var(--surface-alt, #f7f9f8)", border: "1px solid var(--border-color, #eef0ee)", borderRadius: 12, padding: "12px 14px" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary, #888)", marginBottom: 4 }}>{s.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary, #111)", lineHeight: 1 }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary, #888)", marginTop: 3 }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Grafik */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
+              <SignalChart title="RSSI (kuat sinyal)" unit="dBm" color="#48846C" points={lora.rssi} decimals={0} hint="makin dekat 0 makin kuat" />
+              {lora.hasSnr && (
+                <SignalChart title="SNR (rasio sinyal/noise)" unit="dB" color="#5b7c99" points={lora.snr} decimals={1} hint="makin tinggi makin bersih" />
+              )}
+              {lora.len.length > 0 && (
+                <SignalChart title="Panjang Paket" unit="B" color="#c79a4a" points={lora.len} decimals={0} />
+              )}
+            </div>
+
+            {!lora.hasSnr && !signalLoading && lora.packets > 0 && (
+              <p style={{ marginTop: 12, fontSize: 12, color: "var(--text-tertiary)" }}>
+                Belum ada data SNR — pastikan gateway pakai driver <code>serial</code> (baca baris <code>[RF IN]</code> dari board RX). Data lama (dummy/MQTT) hanya punya RSSI.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Perbandingan Komunikasi: LoRa vs HTTP/Internet ── */}
+      <div className={styles.chartPanel}>
+        <div className={styles.panelHeader}>
+          <h2>Perbandingan Komunikasi: LoRa vs HTTP/Internet {selectedBin ? `• ${selectedBin.nodeId}` : ""}</h2>
+        </div>
+
+        {!compare.hasAny ? (
+          <p style={{ padding: 16, color: "var(--text-tertiary)" }}>
+            Belum ada data bertag transport. Jalankan seeder dua jalur di node:
+            {" "}<code>python3 lora_tx_seed.py</code> (LoRa) dan{" "}
+            <code>python3 lora_tx_seed.py --http</code> (internet).
+          </p>
+        ) : (
+          <>
+            {/* Tabel perbandingan */}
+            <div style={{ overflowX: "auto", marginBottom: 16 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "8px 10px", color: "var(--text-tertiary)", fontWeight: 500 }}>Metrik</th>
+                    <th style={{ textAlign: "right", padding: "8px 10px", color: "#48846C", fontWeight: 600 }}>LoRa</th>
+                    <th style={{ textAlign: "right", padding: "8px 10px", color: "#5b7c99", fontWeight: 600 }}>HTTP/Internet</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    { label: "Paket diterima", l: `${compare.lora.packets}`, h: `${compare.http.packets}` },
+                    { label: "Throughput (paket/menit)", l: compare.lora.perMin ? compare.lora.perMin.toFixed(1) : "–", h: compare.http.perMin ? compare.http.perMin.toFixed(1) : "–" },
+                    { label: "Jeda rata-rata (detik)", l: compare.lora.avgGap ? compare.lora.avgGap.toFixed(1) : "–", h: compare.http.avgGap ? compare.http.avgGap.toFixed(1) : "–" },
+                    { label: "Jitter / std jeda (detik)", l: compare.lora.packets >= 2 ? compare.lora.jitter.toFixed(2) : "–", h: compare.http.packets >= 2 ? compare.http.jitter.toFixed(2) : "–" },
+                    { label: "Packet loss (%)", l: compare.lora.lossPct != null ? `${compare.lora.lossPct.toFixed(1)}%` : "–", h: compare.http.lossPct != null ? `${compare.http.lossPct.toFixed(1)}%` : "–" },
+                    { label: "Latency rata-rata (ms)", l: compare.lora.avgLat != null ? compare.lora.avgLat.toFixed(0) : "–", h: compare.http.avgLat != null ? compare.http.avgLat.toFixed(0) : "–" },
+                    { label: "Throughput rata-rata", l: fmtBps(compare.lora.avgTp), h: fmtBps(compare.http.avgTp) },
+                  ]).map((row) => (
+                    <tr key={row.label} style={{ borderTop: "1px solid var(--border-color, #eef0ee)" }}>
+                      <td style={{ padding: "8px 10px", color: "var(--text-secondary)" }}>{row.label}</td>
+                      <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 600, color: "var(--text-primary)" }}>{row.l}</td>
+                      <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 600, color: "var(--text-primary)" }}>{row.h}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Grafik latency dua jalur */}
+            <CompareChart
+              title="Latency device → Server (ms)"
+              unit="ms"
+              decimals={0}
+              hint="Makin rendah makin cepat. Offset jam device saling meniadakan saat LoRa vs HTTP dibandingkan."
+              series={[
+                { name: "LoRa", color: "#48846C", points: compare.lora.latSeries },
+                { name: "HTTP/Internet", color: "#5b7c99", points: compare.http.latSeries },
+              ]}
+            />
+
+            <p style={{ marginTop: 12, fontSize: 12, color: "var(--text-tertiary)" }}>
+              Packet loss dihitung dari lompatan nomor urut (<code>seq</code>) per jalur; latency dari selisih <code>sentAt</code> device dan waktu terima backend.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

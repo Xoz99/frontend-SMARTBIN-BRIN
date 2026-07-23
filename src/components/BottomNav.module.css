@@ -35,6 +35,38 @@
   box-shadow: 0 4px 10px rgba(72, 132, 108, 0.3);
 }
 
+/* Ikon dengan badge notifikasi belum dibaca */
+.navIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 3px);
+  transform: translateY(-50%);
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--color-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  border: 2px solid var(--card-bg);
+  box-sizing: content-box;
+}
+
+/* Badge tetap kontras saat item aktif */
+.active .badge {
+  border-color: var(--color-green);
+}
+
 @media (max-width: 768px) {
   .bottomNavWrapper {
     width: auto;
@@ -48,6 +80,13 @@
     width: 46px;
     height: 46px;
     border-radius: 23px;
+  }
+  /* Di mobile: bubble di pojok atas ikon, seperti app pada umumnya */
+  .badge {
+    top: -5px;
+    left: auto;
+    right: -7px;
+    transform: none;
   }
 }
 
