@@ -532,9 +532,7 @@ export default function AnalyticsPage() {
 
         {!compare.hasAny ? (
           <p style={{ padding: 16, color: "var(--text-tertiary)" }}>
-            Belum ada data bertag transport. Jalankan seeder dua jalur di node:
-            {" "}<code>python3 lora_tx_seed.py</code> (LoRa) dan{" "}
-            <code>python3 lora_tx_seed.py --http</code> (internet).
+            Data belum ada.
           </p>
         ) : (
           <>
