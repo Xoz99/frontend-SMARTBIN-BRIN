@@ -3,9 +3,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import {
-  WarningCircle, Warning,
-  Clock, User, ArrowsOut,
-  Scales, Wind, BatteryMedium, SignOut,
+  WarningCircleIcon, WarningIcon,
+  ClockIcon, UserIcon, ArrowsOutIcon,
+  ScalesIcon, WindIcon, BatteryMediumIcon, SignOutIcon,
+  HandWavingIcon, ConfettiIcon,
 } from "@phosphor-icons/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -38,7 +39,7 @@ function isToday(iso: string | null) {
 }
 
 export default function Home() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const [time, setTime] = useState("");
   const [bins, setBins] = useState<Bin[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -97,19 +98,23 @@ export default function Home() {
       {/* HEADER */}
       <header className={styles.header}>
         <div className={styles.greeting}>
-          <h1>Halo, {user?.name ?? "Petugas"}! 👋</h1>
-          <p>{user?.role === "ADMIN" ? "Administrator" : "Petugas Kebersihan"} • {user?.area?.name ?? "Semua Area"} • {dateLabel}</p>
+          <h1>
+            Halo, {authLoading ? "…" : user?.name ?? "Petugas"}!
+            <HandWavingIcon size={22} weight="fill" style={{ marginLeft: 6, verticalAlign: "-3px" }} />
+          </h1>
+          {/* Sesi masih dipulihkan → jangan tebak peran, nanti teksnya "loncat". */}
+          <p>{authLoading ? "Memuat sesi…" : `${user?.role === "ADMIN" ? "Administrator" : "Petugas Kebersihan"} • ${user?.area?.name ?? "Semua Area"}`} • {dateLabel}</p>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.timeBadge}>
-            <Clock size={16} weight="regular" />
+            <ClockIcon size={16} weight="regular" />
             <span>{time || "--.--.--"}</span>
           </div>
           <button className={styles.profileButton} onClick={logout} title="Keluar">
-            <SignOut size={18} weight="bold" />
+            <SignOutIcon size={18} weight="bold" />
           </button>
           <button className={styles.profileButton}>
-            <User size={20} weight="fill" />
+            <UserIcon size={20} weight="fill" />
           </button>
         </div>
       </header>
@@ -156,7 +161,7 @@ export default function Home() {
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Peta Lokasi Real-time</h2>
-            <Link href="/explore" className={styles.panelAction}><ArrowsOut size={18} weight="bold" /></Link>
+            <Link href="/explore" className={styles.panelAction}><ArrowsOutIcon size={18} weight="bold" /></Link>
           </div>
           <div className={styles.mapPlaceholder}>
             <MapTracker bins={bins} />
@@ -176,13 +181,16 @@ export default function Home() {
           </div>
           <div className={`${styles.notificationList} ${styles.noScrollbar}`}>
             {!loading && alerts.length === 0 && (
-              <div className={styles.emptyState}>Tidak ada notifikasi aktif 🎉</div>
+              <div className={styles.emptyState}>
+                <ConfettiIcon size={18} weight="fill" style={{ marginRight: 6, verticalAlign: "-4px" }} />
+                Tidak ada notifikasi aktif
+              </div>
             )}
             {alerts.slice(0, 8).map((a) => {
               const type = a.type === "FULL_VOLUME" || a.type === "FULL_WEIGHT" || a.type === "GAS_HIGH" ? "critical" : "warning";
               return (
                 <div key={a.id} className={styles.notificationItem} data-type={type}>
-                  <div className={styles.notifIcon}>{type === "critical" ? <Warning size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}</div>
+                  <div className={styles.notifIcon}>{type === "critical" ? <WarningIcon size={18} weight="fill" /> : <WarningCircleIcon size={18} weight="fill" />}</div>
                   <div className={styles.notifContent}>
                     <div className={styles.notifHeader}>
                       <div className={styles.notifTitle}>{a.bin?.nodeId ?? "Bin"} <span className={styles.notifLocation}>• {a.bin?.location ?? "-"}</span></div>
@@ -222,9 +230,9 @@ export default function Home() {
                     <div className={styles.binProgressFill} style={{ width: `${vol ?? 0}%` }}></div>
                   </div>
                   <div className={styles.binMetrics}>
-                    <span className={styles.binMetricPill}><Scales size={14} weight="duotone" color="#5b7c99" /> {formatWeight(r?.weightRaw) ?? "–"}</span>
-                    <span className={styles.binMetricPill}><Wind size={14} weight="duotone" color="#c79a4a" /> {r?.gas != null ? `${r.gas}` : "–"}</span>
-                    <span className={styles.binMetricPill}><BatteryMedium size={14} weight="duotone" color="#48846c" /> {liveBattery(bin) != null ? `${Math.round(liveBattery(bin)!)}%` : "–"}</span>
+                    <span className={styles.binMetricPill}><ScalesIcon size={14} weight="duotone" color="#5b7c99" /> {formatWeight(r?.weightRaw) ?? "–"}</span>
+                    <span className={styles.binMetricPill}><WindIcon size={14} weight="duotone" color="#c79a4a" /> {r?.gas != null ? `${r.gas}` : "–"}</span>
+                    <span className={styles.binMetricPill}><BatteryMediumIcon size={14} weight="duotone" color="#48846c" /> {liveBattery(bin) != null ? `${Math.round(liveBattery(bin)!)}%` : "–"}</span>
                   </div>
                 </div>
               );

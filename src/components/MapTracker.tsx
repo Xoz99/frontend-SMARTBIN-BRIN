@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Scales, BatteryMedium, Wind, WifiHigh, ArrowSquareOut } from '@phosphor-icons/react';
+import { ScalesIcon, BatteryMediumIcon, WindIcon, WifiHighIcon, ArrowSquareOutIcon } from '@phosphor-icons/react';
 import type { Bin, StatusLevel } from '@/lib/types';
 import { binStatus, binVolume, STATUS_LABEL, latestReading, timeAgo, liveBattery, freshnessLabel, isStale, cleanRssi, formatWeight } from '@/lib/binStatus';
 
@@ -121,28 +121,28 @@ export default function MapTracker({ bins, focus }: Props) {
 
                 <div className="bp-grid">
                   <div className="bp-metric">
-                    <Scales size={17} weight="duotone" className="bp-micon" />
+                    <ScalesIcon size={17} weight="duotone" className="bp-micon" />
                     <div className="bp-mbody">
                       <span className="bp-mlabel">Berat</span>
                       <span className="bp-mval">{formatWeight(reading?.weightRaw) ?? '—'}</span>
                     </div>
                   </div>
                   <div className="bp-metric">
-                    <BatteryMedium size={17} weight="duotone" className="bp-micon" />
+                    <BatteryMediumIcon size={17} weight="duotone" className="bp-micon" />
                     <div className="bp-mbody">
                       <span className="bp-mlabel">Baterai</span>
                       <span className="bp-mval">{fmt(liveBattery(bin), '%')}</span>
                     </div>
                   </div>
                   <div className="bp-metric">
-                    <Wind size={17} weight="duotone" className="bp-micon" />
+                    <WindIcon size={17} weight="duotone" className="bp-micon" />
                     <div className="bp-mbody">
                       <span className="bp-mlabel">Gas</span>
                       <span className="bp-mval">{fmt(reading?.gas, ' ppm')}</span>
                     </div>
                   </div>
                   <div className="bp-metric">
-                    <WifiHigh size={17} weight="duotone" className="bp-micon" />
+                    <WifiHighIcon size={17} weight="duotone" className="bp-micon" />
                     <div className="bp-mbody">
                       <span className="bp-mlabel">Sinyal</span>
                       <span className="bp-mval">{fmt(cleanRssi(reading?.rssi), ' dBm')}</span>
@@ -157,7 +157,7 @@ export default function MapTracker({ bins, focus }: Props) {
                   rel="noopener noreferrer"
                 >
                   Buka di Google Maps
-                  <ArrowSquareOut size={14} weight="bold" />
+                  <ArrowSquareOutIcon size={14} weight="bold" />
                 </a>
 
                 <div className="bp-foot">

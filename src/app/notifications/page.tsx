@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { Warning, WarningCircle, BatteryLow, Wind, CheckCircle, CaretDown } from "@phosphor-icons/react";
+import { WarningIcon, WarningCircleIcon, BatteryLowIcon, WindIcon, CheckCircleIcon, CaretDownIcon } from "@phosphor-icons/react";
 import * as api from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
 import { timeAgo } from "@/lib/binStatus";
@@ -32,13 +32,13 @@ function alertVisual(type: AlertType) {
   switch (type) {
     case "FULL_VOLUME":
     case "FULL_WEIGHT":
-      return { cls: "critical", icon: <Warning size={20} weight="duotone" /> };
+      return { cls: "critical", icon: <WarningIcon size={20} weight="duotone" /> };
     case "GAS_HIGH":
-      return { cls: "critical", icon: <Wind size={20} weight="duotone" /> };
+      return { cls: "critical", icon: <WindIcon size={20} weight="duotone" /> };
     case "BATTERY_LOW":
-      return { cls: "warning", icon: <BatteryLow size={20} weight="duotone" /> };
+      return { cls: "warning", icon: <BatteryLowIcon size={20} weight="duotone" /> };
     default:
-      return { cls: "warning", icon: <WarningCircle size={20} weight="duotone" /> };
+      return { cls: "warning", icon: <WarningCircleIcon size={20} weight="duotone" /> };
   }
 }
 
@@ -149,7 +149,7 @@ export default function NotificationsPage() {
                     </span>
                     <span className={styles.message}>{n.message}</span>
                   </span>
-                  <CaretDown size={16} weight="bold" className={styles.caret} data-open={isOpen} />
+                  <CaretDownIcon size={16} weight="bold" className={styles.caret} data-open={isOpen} />
                 </button>
 
                 {isOpen && (
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
                     <div className={styles.detailRow}>
                       <span>Status</span>
                       <strong className={n.resolved ? styles.statusRead : styles.statusNew}>
-                        {n.resolved ? <><CheckCircle size={14} weight="fill" /> Sudah dibaca</> : "Baru"}
+                        {n.resolved ? <><CheckCircleIcon size={14} weight="fill" /> Sudah dibaca</> : "Baru"}
                       </strong>
                     </div>
                   </div>

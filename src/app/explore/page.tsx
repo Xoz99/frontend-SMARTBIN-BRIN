@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "./page.module.css";
-import { MagnifyingGlass, X, ListBullets } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, XIcon, ListBulletsIcon } from "@phosphor-icons/react";
 import * as api from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
 import { binStatus, binVolume } from "@/lib/binStatus";
@@ -95,7 +95,7 @@ export default function ExploreMapsPage() {
     <div className={styles.mapsContainer}>
       <div className={styles.searchOverlay}>
         <div className={styles.searchBox}>
-          <MagnifyingGlass size={20} weight="bold" className={styles.searchIcon} />
+          <MagnifyingGlassIcon size={20} weight="bold" className={styles.searchIcon} />
           <input
             type="text"
             placeholder="Cari ID Bin atau Nama Lokasi…"
@@ -105,7 +105,7 @@ export default function ExploreMapsPage() {
           />
           {query && (
             <button className={styles.searchClear} onClick={() => setQuery("")} title="Bersihkan">
-              <X size={16} weight="bold" />
+              <XIcon size={16} weight="bold" />
             </button>
           )}
         </div>
@@ -157,7 +157,7 @@ export default function ExploreMapsPage() {
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <span className={styles.panelBadge}>{zones.length} Wilayah</span>
               <button className={styles.closePanelBtn} onClick={() => setIsPanelOpen(false)} title="Sembunyikan Panel">
-                <X size={16} />
+                <XIcon size={16} />
               </button>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function ExploreMapsPage() {
         </div>
       ) : (
         <button className={styles.openPanelBtn} onClick={() => setIsPanelOpen(true)}>
-          <ListBullets size={18} weight="bold" /> Tampilkan Ringkasan
+          <ListBulletsIcon size={18} weight="bold" /> Tampilkan Ringkasan
         </button>
       )}
     </div>

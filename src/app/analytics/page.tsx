@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./page.module.css";
-import { TrendUp, CalendarDots, MapPin, Warning } from "@phosphor-icons/react";
+import { TrendUpIcon, CalendarDotsIcon, MapPinIcon, WarningIcon } from "@phosphor-icons/react";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
@@ -336,7 +336,7 @@ export default function AnalyticsPage() {
                   className={`${styles.periodPill} ${activePeriod === p ? styles.periodPillActive : ""}`}
                   onClick={() => handlePeriodClick(p)}
                 >
-                  {p === "Custom" && <CalendarDots size={15} weight={activePeriod === p ? "fill" : "regular"} />}{p}
+                  {p === "Custom" && <CalendarDotsIcon size={15} weight={activePeriod === p ? "fill" : "regular"} />}{p}
                 </button>
                 {p === "Custom" && customOpen && activePeriod === "Custom" && (
                   <div className={styles.datePopover} role="dialog">
@@ -368,7 +368,7 @@ export default function AnalyticsPage() {
         <div className={styles.kpiCard}>
           <span className={styles.kpiEyebrow}>Total Sampah Terpilah</span>
           <h2>{loading ? "…" : `${totalDeposits} item`}</h2>
-          <p className={styles.trendUp}><TrendUp size={13} weight="bold" /> {totalWeightKg ? `${totalWeightKg.toFixed(1)} kg total` : "berat belum tercatat"}</p>
+          <p className={styles.trendUp}><TrendUpIcon size={13} weight="bold" /> {totalWeightKg ? `${totalWeightKg.toFixed(1)} kg total` : "berat belum tercatat"}</p>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiEyebrow}>Jenis Paling Sering</span>
@@ -454,8 +454,8 @@ export default function AnalyticsPage() {
               <div className={styles.areaRank}>{i + 1}</div>
               <div className={styles.areaBody}>
                 <div className={styles.areaHeader}>
-                  <span className={styles.areaName}><MapPin size={14} weight="fill" color="#48846c" /> {a.label} • {a.location}</span>
-                  <span className={styles.areaFullCount}><Warning size={13} weight="fill" color="#c25a5e" /> {a.count}× alert</span>
+                  <span className={styles.areaName}><MapPinIcon size={14} weight="fill" color="#48846c" /> {a.label} • {a.location}</span>
+                  <span className={styles.areaFullCount}><WarningIcon size={13} weight="fill" color="#c25a5e" /> {a.count}× alert</span>
                 </div>
                 <div className={styles.areaProgressBar}>
                   <div className={styles.areaProgressFill} style={{ width: `${a.rate}%` }} />

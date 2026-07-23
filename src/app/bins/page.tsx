@@ -2,8 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Trash, Plus, PencilSimple, MapPin, X, CircleNotch, FloppyDisk, ShieldWarning, Stack, Check, MagnifyingGlass,
-  Scales, Wind, BatteryMedium, Gauge, WifiHigh, WifiSlash, Clock, ArrowSquareOut,
+  TrashIcon, PlusIcon, PencilSimpleIcon, MapPinIcon, XIcon, CircleNotchIcon, FloppyDiskIcon, ShieldWarningIcon, StackIcon, CheckIcon, MagnifyingGlassIcon,
+  ScalesIcon, WindIcon, BatteryMediumIcon, GaugeIcon, WifiHighIcon, WifiSlashIcon, ClockIcon, ArrowSquareOutIcon,
 } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 import * as api from "@/lib/api";
@@ -24,7 +24,7 @@ interface FormState {
 const EMPTY_FORM: FormState = { nodeId: "", location: "", lat: "", lng: "", areaId: "" };
 
 export default function BinsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [bins, setBins] = useState<Bin[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(true);
@@ -238,18 +238,18 @@ export default function BinsPage() {
         {isAdmin && (
           <div className={styles.headerActions}>
             <button className={styles.secondaryBtn} onClick={openAreas}>
-              <Stack size={18} weight="duotone" /> Kelola Area
+              <StackIcon size={18} weight="duotone" /> Kelola Area
             </button>
             <button className={styles.primaryBtn} onClick={openCreate}>
-              <Plus size={18} weight="bold" /> Tambah Bin
+              <PlusIcon size={18} weight="bold" /> Tambah Bin
             </button>
           </div>
         )}
       </header>
 
-      {!isAdmin && (
+      {!authLoading && !isAdmin && (
         <div className={styles.noticeBanner}>
-          <ShieldWarning size={18} weight="fill" /> Mode lihat-saja. Hanya Admin yang bisa menambah, mengubah, atau menghapus bin.
+          <ShieldWarningIcon size={18} weight="fill" /> Mode lihat-saja. Hanya Admin yang bisa menambah, mengubah, atau menghapus bin.
         </div>
       )}
 
@@ -257,7 +257,7 @@ export default function BinsPage() {
 
       {/* Search */}
       <div className={styles.searchBar}>
-        <MagnifyingGlass size={18} weight="bold" />
+        <MagnifyingGlassIcon size={18} weight="bold" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -265,7 +265,7 @@ export default function BinsPage() {
         />
         {query && (
           <button className={styles.clearBtn} onClick={() => setQuery("")} title="Bersihkan">
-            <X size={16} />
+            <XIcon size={16} />
           </button>
         )}
         <span className={styles.searchCount}>{filteredBins.length} dari {bins.length} bin</span>
@@ -294,17 +294,17 @@ export default function BinsPage() {
                   {isAdmin && (
                     <span className={styles.cardActions}>
                       <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); openEdit(bin); }} title="Ubah">
-                        <PencilSimple size={15} />
+                        <PencilSimpleIcon size={15} />
                       </button>
                       <button className={`${styles.iconBtn} ${styles.danger}`} onClick={(e) => { e.stopPropagation(); remove(bin); }} title="Hapus">
-                        <Trash size={15} />
+                        <TrashIcon size={15} />
                       </button>
                     </span>
                   )}
                 </div>
 
                 <span className={styles.cardLoc}>
-                  <MapPin size={13} weight="fill" color="#48846c" /> {bin.location}
+                  <MapPinIcon size={13} weight="fill" color="#48846c" /> {bin.location}
                 </span>
 
                 <div className={styles.cardCap}>
@@ -319,13 +319,13 @@ export default function BinsPage() {
 
                 <div className={styles.cardMeta}>
                   <span className={styles.cardMetaItem}>
-                    <Scales size={14} weight="duotone" color="#48846c" />{formatWeight(r?.weightRaw) ?? "–"}
+                    <ScalesIcon size={14} weight="duotone" color="#48846c" />{formatWeight(r?.weightRaw) ?? "–"}
                   </span>
                   <span className={styles.cardMetaItem}>
-                    <BatteryMedium size={14} weight="duotone" color="#c79a4a" />{liveBattery(bin) != null ? `${Math.round(liveBattery(bin)!)}%` : "–"}
+                    <BatteryMediumIcon size={14} weight="duotone" color="#c79a4a" />{liveBattery(bin) != null ? `${Math.round(liveBattery(bin)!)}%` : "–"}
                   </span>
                   <span className={styles.cardMetaItem}>
-                    {online ? <WifiHigh size={14} weight="bold" color="#48846c" /> : <WifiSlash size={14} weight="bold" color="#9ea5ad" />}
+                    {online ? <WifiHighIcon size={14} weight="bold" color="#48846c" /> : <WifiSlashIcon size={14} weight="bold" color="#9ea5ad" />}
                     {online ? "Online" : "Offline"}
                   </span>
                 </div>
@@ -333,7 +333,7 @@ export default function BinsPage() {
                 <div className={styles.cardFoot}>
                   <span className={styles.cardArea}>{bin.area?.name ?? "Tanpa area"}</span>
                   <span className={styles.cardTime}>
-                    <Clock size={12} weight="regular" /> {timeAgo(r?.timestamp ?? r?.createdAt)}
+                    <ClockIcon size={12} weight="regular" /> {timeAgo(r?.timestamp ?? r?.createdAt)}
                   </span>
                 </div>
               </article>
@@ -348,7 +348,7 @@ export default function BinsPage() {
           <form className={styles.modal} onClick={(e) => e.stopPropagation()} onSubmit={submit}>
             <div className={styles.modalHead}>
               <h2>{editing ? "Ubah Bin" : "Tambah Bin"}</h2>
-              <button type="button" className={styles.closeBtn} onClick={close}><X size={18} /></button>
+              <button type="button" className={styles.closeBtn} onClick={close}><XIcon size={18} /></button>
             </div>
 
             {formError && <div className={styles.errorBanner}>⚠ {formError}</div>}
@@ -404,7 +404,7 @@ export default function BinsPage() {
             <div className={styles.modalActions}>
               <button type="button" className={styles.secondaryBtn} onClick={close} disabled={saving}>Batal</button>
               <button type="submit" className={styles.primaryBtn} disabled={saving}>
-                {saving ? <><CircleNotch size={18} weight="bold" className={styles.spin} /> Menyimpan…</> : <><FloppyDisk size={18} weight="fill" /> Simpan</>}
+                {saving ? <><CircleNotchIcon size={18} weight="bold" className={styles.spin} /> Menyimpan…</> : <><FloppyDiskIcon size={18} weight="fill" /> Simpan</>}
               </button>
             </div>
           </form>
@@ -417,7 +417,7 @@ export default function BinsPage() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>Kelola Area</h2>
-              <button type="button" className={styles.closeBtn} onClick={() => setAreaOpen(false)}><X size={18} /></button>
+              <button type="button" className={styles.closeBtn} onClick={() => setAreaOpen(false)}><XIcon size={18} /></button>
             </div>
 
             {areaError && <div className={styles.errorBanner}>⚠ {areaError}</div>}
@@ -431,7 +431,7 @@ export default function BinsPage() {
                 placeholder="Nama area baru…"
               />
               <button className={styles.primaryBtn} onClick={addArea} disabled={areaBusy}>
-                {areaBusy ? <CircleNotch size={18} weight="bold" className={styles.spin} /> : <Plus size={18} weight="bold" />} Tambah
+                {areaBusy ? <CircleNotchIcon size={18} weight="bold" className={styles.spin} /> : <PlusIcon size={18} weight="bold" />} Tambah
               </button>
             </div>
 
@@ -449,15 +449,15 @@ export default function BinsPage() {
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveArea(a.id); } }}
                         autoFocus
                       />
-                      <button className={styles.iconBtn} onClick={() => saveArea(a.id)} disabled={areaBusy} title="Simpan"><Check size={16} weight="bold" /></button>
-                      <button className={styles.iconBtn} onClick={() => setEditAreaId(null)} title="Batal"><X size={16} /></button>
+                      <button className={styles.iconBtn} onClick={() => saveArea(a.id)} disabled={areaBusy} title="Simpan"><CheckIcon size={16} weight="bold" /></button>
+                      <button className={styles.iconBtn} onClick={() => setEditAreaId(null)} title="Batal"><XIcon size={16} /></button>
                     </>
                   ) : (
                     <>
                       <span className={styles.areaName}>{a.name}</span>
                       <span className={styles.areaCount}>{a._count?.bins ?? 0} bin</span>
-                      <button className={styles.iconBtn} onClick={() => { setEditAreaId(a.id); setEditAreaName(a.name); setAreaError(null); }} title="Ubah"><PencilSimple size={16} /></button>
-                      <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => removeArea(a)} title="Hapus"><Trash size={16} /></button>
+                      <button className={styles.iconBtn} onClick={() => { setEditAreaId(a.id); setEditAreaName(a.name); setAreaError(null); }} title="Ubah"><PencilSimpleIcon size={16} /></button>
+                      <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => removeArea(a)} title="Hapus"><TrashIcon size={16} /></button>
                     </>
                   )}
                 </div>
@@ -480,19 +480,19 @@ export default function BinsPage() {
               <div className={styles.drawerHead}>
                 <div>
                   <div className={styles.drawerNode}>{detailBin.nodeId}</div>
-                  <div className={styles.drawerLoc}><MapPin size={14} weight="fill" color="#48846c" /> {detailBin.location}</div>
+                  <div className={styles.drawerLoc}><MapPinIcon size={14} weight="fill" color="#48846c" /> {detailBin.location}</div>
                 </div>
-                <button className={styles.closeBtn} onClick={() => setDetailId(null)}><X size={18} /></button>
+                <button className={styles.closeBtn} onClick={() => setDetailId(null)}><XIcon size={18} /></button>
               </div>
 
               {/* Status + koneksi */}
               <div className={styles.drawerBadges}>
                 <span className={`${styles.statusPill} ${styles[status]}`}>{STATUS_LABEL[status]}</span>
                 <span className={`${styles.connPill} ${online ? styles.online : styles.offline}`}>
-                  {online ? <WifiHigh size={13} weight="bold" /> : <WifiSlash size={13} weight="bold" />} {online ? "Online" : "Offline"}
+                  {online ? <WifiHighIcon size={13} weight="bold" /> : <WifiSlashIcon size={13} weight="bold" />} {online ? "Online" : "Offline"}
                 </span>
                 <span className={styles.drawerUpdated}>
-                  <Clock size={13} weight="regular" /> {timeAgo(r?.timestamp ?? r?.createdAt)}
+                  <ClockIcon size={13} weight="regular" /> {timeAgo(r?.timestamp ?? r?.createdAt)}
                 </span>
               </div>
 
@@ -510,19 +510,19 @@ export default function BinsPage() {
               {/* Metric cards */}
               <div className={styles.metricGrid}>
                 <div className={styles.metricCard}>
-                  <span className={styles.metricLabel}><Scales size={15} weight="duotone" color="#48846c" /> Berat</span>
+                  <span className={styles.metricLabel}><ScalesIcon size={15} weight="duotone" color="#48846c" /> Berat</span>
                   <span className={styles.metricValue}>{formatWeight(r?.weightRaw) ?? "–"}</span>
                 </div>
                 <div className={styles.metricCard}>
-                  <span className={styles.metricLabel}><Wind size={15} weight="duotone" color="#5b7c99" /> Gas</span>
+                  <span className={styles.metricLabel}><WindIcon size={15} weight="duotone" color="#5b7c99" /> Gas</span>
                   <span className={styles.metricValue}>{r?.gas != null ? r.gas : "–"}</span>
                 </div>
                 <div className={styles.metricCard}>
-                  <span className={styles.metricLabel}><BatteryMedium size={15} weight="duotone" color="#c79a4a" /> Baterai</span>
+                  <span className={styles.metricLabel}><BatteryMediumIcon size={15} weight="duotone" color="#c79a4a" /> Baterai</span>
                   <span className={styles.metricValue}>{liveBattery(detailBin) != null ? `${Math.round(liveBattery(detailBin)!)}%` : "–"}</span>
                 </div>
                 <div className={styles.metricCard}>
-                  <span className={styles.metricLabel}><Gauge size={15} weight="duotone" color="#48846c" /> Volume</span>
+                  <span className={styles.metricLabel}><GaugeIcon size={15} weight="duotone" color="#48846c" /> Volume</span>
                   <span className={styles.metricValue}>{vol !== null ? `${Math.round(vol)}%` : "–"}</span>
                 </div>
               </div>
@@ -540,7 +540,7 @@ export default function BinsPage() {
                     title="Buka di Google Maps"
                   >
                     {Number(detailBin.lat).toFixed(5)}, {Number(detailBin.lng).toFixed(5)}
-                    <ArrowSquareOut size={14} weight="bold" />
+                    <ArrowSquareOutIcon size={14} weight="bold" />
                   </a>
                 </div>
                 <div className={styles.infoRow}><span>Ambang volume</span><strong>{detailBin.volumeThreshold ?? 80}%</strong></div>
@@ -553,10 +553,10 @@ export default function BinsPage() {
               {isAdmin && (
                 <div className={styles.drawerActions}>
                   <button className={styles.secondaryBtn} onClick={() => { setDetailId(null); openEdit(detailBin); }}>
-                    <PencilSimple size={16} /> Ubah
+                    <PencilSimpleIcon size={16} /> Ubah
                   </button>
                   <button className={`${styles.secondaryBtn} ${styles.dangerBtn}`} onClick={() => { setDetailId(null); remove(detailBin); }}>
-                    <Trash size={16} /> Hapus
+                    <TrashIcon size={16} /> Hapus
                   </button>
                 </div>
               )}
