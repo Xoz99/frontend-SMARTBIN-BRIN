@@ -19,6 +19,12 @@ export interface User {
   createdAt?: string;
 }
 
+// Satu kompartemen EcoSort (per jenis sampah): jarak laser + tingkat penuh.
+export interface CompartmentReading {
+  distance: number | null; // cm (null = out-of-range / kosong)
+  volume: number | null;   // % penuh
+}
+
 export interface SensorReading {
   weight: number | null;
   // Berat timbangan live dari hardware (kg). weight = berat terkonfirmasi
@@ -27,6 +33,13 @@ export interface SensorReading {
   weightRaw?: number | null;
   volume: number | null;
   battery: number | null;
+  batteryVoltage?: number | null; // V — tegangan pack baterai (EcoSort INA219)
+  // Rincian per-kompartemen EcoSort (organik/anorganik/b3). null utk node non-EcoSort.
+  compartments?: {
+    organik?: CompartmentReading;
+    anorganik?: CompartmentReading;
+    b3?: CompartmentReading;
+  } | null;
   gas: number | null;
   rssi: number | null;
   snr?: number | null; // dB — LoRa signal-to-noise ratio

@@ -259,6 +259,16 @@ export default function AnalyticsPage() {
 
   const selectedBin = bins.find((b) => b.id === selectedBinId);
 
+  // ── Deteksi jenis sampah terakhir untuk bin terpilih (dari pemilah/kamera) ──
+  // "Jenis sampah yang terdeteksi pada saat itu" = deposit hasil klasifikasi,
+  // terbaru dulu. Realtime: CLASSIFICATION_NEW memicu load() → deposits refetch.
+  const binDetections = useMemo(() => {
+    return [...deposits]
+      .filter((d) => d.binId === selectedBinId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 8);
+  }, [deposits, selectedBinId]);
+
   // ── Perbandingan transport: LoRa vs HTTP/internet ──
   const compare = useMemo(() => {
     const rows = [...signalHistory]
@@ -521,6 +531,42 @@ export default function AnalyticsPage() {
               </p>
             )}
           </>
+        )}
+      </div>
+
+      {/* ── Jenis sampah yang terdeteksi (hasil pemilah/kamera) ── */}
+      <div className={styles.chartPanel}>
+        <div className={styles.panelHeader}>
+          <h2>Jenis Sampah Terdeteksi {selectedBin ? `• ${selectedBin.nodeId}` : ""}</h2>
+          {binDetections.length === 0 && (
+            <span style={{ fontSize: 11, color: "var(--text-tertiary)", border: "1px solid var(--border-color)", padding: "2px 8px", borderRadius: 999 }}>belum ada</span>
+          )}
+        </div>
+        {binDetections.length === 0 ? (
+          <p style={{ padding: 16, color: "var(--text-tertiary)" }}>
+            Belum ada deteksi pemilahan untuk bin ini pada periode {periodLabel}.
+          </p>
+        ) : (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {binDetections.map((d) => {
+              const meta = WASTE_META.find((m) => m.label === d.label) ?? WASTE_META[WASTE_META.length - 1];
+              return (
+                <li key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 6px", borderTop: "1px solid var(--border-color, #eef0ee)" }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 999, background: meta.color, flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600, color: "var(--text-primary)", minWidth: 92 }}>{meta.name}</span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)", minWidth: 54 }}>
+                    {d.confidence != null ? `${Math.round(d.confidence * 100)}%` : "—"}
+                  </span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                    {d.weight != null ? `${d.weight.toFixed(1)} kg` : ""}
+                  </span>
+                  <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>
+                    {new Date(d.createdAt).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
 

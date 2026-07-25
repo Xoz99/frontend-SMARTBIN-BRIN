@@ -91,6 +91,8 @@ export default function BinsPage() {
         weightRaw: (payload.weightRaw as number) ?? null,
         volume: (payload.volume as number) ?? null,
         battery: (payload.battery as number) ?? null,
+        batteryVoltage: (payload.batteryVoltage as number) ?? null,
+        compartments: (payload.compartments as SensorReading["compartments"]) ?? null,
         gas: (payload.gas as number) ?? null,
         rssi: (payload.rssi as number) ?? null,
         snr: (payload.snr as number) ?? null,
@@ -527,8 +529,45 @@ export default function BinsPage() {
                 </div>
               </div>
 
+              {/* Kompartemen EcoSort (per jenis sampah) — tampil hanya kalau ada datanya */}
+              {r?.compartments && (
+                <div style={{ marginTop: 2 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #555)", margin: "10px 2px 8px" }}>
+                    Kompartemen (EcoSort)
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                    {([
+                      { key: "organik", name: "Organik", color: "#48846C" },
+                      { key: "anorganik", name: "Anorganik", color: "#5b7c99" },
+                      { key: "b3", name: "B3", color: "#c25a5e" },
+                    ] as const).map(({ key, name, color }) => {
+                      const c = r.compartments?.[key];
+                      const cvol = c?.volume ?? 0;
+                      return (
+                        <div key={key} style={{ border: "1px solid var(--border-color, #eef0ee)", borderRadius: 12, padding: "10px 12px", background: "var(--surface-alt, #f7f9f8)" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 999, background: color, display: "inline-block" }} />
+                            <span style={{ fontSize: 12, color: "var(--text-secondary, #555)" }}>{name}</span>
+                          </div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary, #111)", lineHeight: 1 }}>{Math.round(cvol)}%</div>
+                          <div style={{ height: 5, borderRadius: 999, background: "var(--border-color, #e5e7eb)", marginTop: 8, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${cvol}%`, background: color }} />
+                          </div>
+                          <div style={{ fontSize: 11, color: "var(--text-tertiary, #888)", marginTop: 6 }}>
+                            {c?.distance != null ? `${c.distance.toFixed(1)} cm` : "kosong"}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Info detail */}
               <div className={styles.infoList}>
+                {r?.batteryVoltage != null && (
+                  <div className={styles.infoRow}><span>Tegangan baterai</span><strong>{r.batteryVoltage.toFixed(2)} V</strong></div>
+                )}
                 <div className={styles.infoRow}><span>Area</span><strong>{detailBin.area?.name ?? "—"}</strong></div>
                 <div className={styles.infoRow}>
                   <span>Koordinat</span>
