@@ -62,6 +62,7 @@ export default function AnalyticsPage() {
   const [signalUnsupported, setSignalUnsupported] = useState(false);
   // Deteksi jenis sampah (dari tabel classifications) untuk bin terpilih.
   const [detections, setDetections] = useState<Classification[]>([]);
+  const [detectLimit, setDetectLimit] = useState(8); // "Muat lebih banyak" (+8, maks 100)
 
   useEffect(() => { setCustomStart(daysAgoISO(7)); setCustomEnd(todayISO()); }, []);
 
@@ -192,15 +193,18 @@ export default function AnalyticsPage() {
     return () => { active = false; };
   }, [selectedBinId, tick]);
 
+  // Reset jumlah tampil ke 8 tiap ganti bin / periode.
+  useEffect(() => { setDetectLimit(8); }, [selectedBinId, from, to]);
+
   // Muat deteksi jenis sampah (tabel classifications) untuk bin + periode terpilih.
-  // Refetch saat bin/periode berubah atau ada klasifikasi baru (tick).
+  // Refetch saat bin/periode/limit berubah atau ada klasifikasi baru (tick).
   useEffect(() => {
     if (!selectedBinId) { setDetections([]); return; }
     let active = true;
     (async () => {
       try {
         const rows = await api.getClassifications({
-          binId: selectedBinId, from: from.toISOString(), to: to.toISOString(), limit: 8,
+          binId: selectedBinId, from: from.toISOString(), to: to.toISOString(), limit: detectLimit,
         });
         if (active) setDetections(rows);
       } catch {
@@ -208,7 +212,7 @@ export default function AnalyticsPage() {
       }
     })();
     return () => { active = false; };
-  }, [selectedBinId, from, to, tick]);
+  }, [selectedBinId, from, to, detectLimit, tick]);
 
   const inRange = (iso: string | null) => {
     if (!iso) return false;
@@ -574,6 +578,18 @@ export default function AnalyticsPage() {
               );
             })}
           </ul>
+        )}
+        {/* Muat lebih banyak: tampil kalau list penuh (mungkin masih ada) & belum mentok 100 */}
+        {detections.length >= detectLimit && detectLimit < 100 && (
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => setDetectLimit((n) => Math.min(100, n + 8))}
+              style={{ fontSize: 13, fontWeight: 600, color: "#48846C", background: "transparent", border: "1px solid var(--border-color, #e5e7eb)", borderRadius: 8, padding: "7px 16px", cursor: "pointer" }}
+            >
+              Muat lebih banyak
+            </button>
+          </div>
         )}
       </div>
 
