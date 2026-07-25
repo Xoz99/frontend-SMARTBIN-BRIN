@@ -6,7 +6,7 @@ import { TrendUpIcon, CalendarDotsIcon, MapPinIcon, WarningIcon } from "@phospho
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
-import type { Alert, Bin, ClassificationSummary, Deposit, SensorReading, WasteLabel, WeeklyVolumePoint } from "@/lib/types";
+import type { Alert, Bin, Classification, ClassificationSummary, Deposit, SensorReading, WasteLabel, WeeklyVolumePoint } from "@/lib/types";
 import SignalChart from "@/components/SignalChart";
 import CompareChart from "@/components/CompareChart";
 
@@ -60,6 +60,8 @@ export default function AnalyticsPage() {
   const [signalHistory, setSignalHistory] = useState<SensorReading[]>([]);
   const [signalLoading, setSignalLoading] = useState(false);
   const [signalUnsupported, setSignalUnsupported] = useState(false);
+  // Deteksi jenis sampah (dari tabel classifications) untuk bin terpilih.
+  const [detections, setDetections] = useState<Classification[]>([]);
 
   useEffect(() => { setCustomStart(daysAgoISO(7)); setCustomEnd(todayISO()); }, []);
 
@@ -190,6 +192,24 @@ export default function AnalyticsPage() {
     return () => { active = false; };
   }, [selectedBinId, tick]);
 
+  // Muat deteksi jenis sampah (tabel classifications) untuk bin + periode terpilih.
+  // Refetch saat bin/periode berubah atau ada klasifikasi baru (tick).
+  useEffect(() => {
+    if (!selectedBinId) { setDetections([]); return; }
+    let active = true;
+    (async () => {
+      try {
+        const rows = await api.getClassifications({
+          binId: selectedBinId, from: from.toISOString(), to: to.toISOString(), limit: 8,
+        });
+        if (active) setDetections(rows);
+      } catch {
+        if (active) setDetections([]); // endpoint belum ada / error → kosongkan
+      }
+    })();
+    return () => { active = false; };
+  }, [selectedBinId, from, to, tick]);
+
   const inRange = (iso: string | null) => {
     if (!iso) return false;
     const t = new Date(iso).getTime();
@@ -258,16 +278,6 @@ export default function AnalyticsPage() {
   }, [signalHistory]);
 
   const selectedBin = bins.find((b) => b.id === selectedBinId);
-
-  // ── Deteksi jenis sampah terakhir untuk bin terpilih (dari pemilah/kamera) ──
-  // "Jenis sampah yang terdeteksi pada saat itu" = deposit hasil klasifikasi,
-  // terbaru dulu. Realtime: CLASSIFICATION_NEW memicu load() → deposits refetch.
-  const binDetections = useMemo(() => {
-    return [...deposits]
-      .filter((d) => d.binId === selectedBinId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 8);
-  }, [deposits, selectedBinId]);
 
   // ── Perbandingan transport: LoRa vs HTTP/internet ──
   const compare = useMemo(() => {
@@ -538,17 +548,17 @@ export default function AnalyticsPage() {
       <div className={styles.chartPanel}>
         <div className={styles.panelHeader}>
           <h2>Jenis Sampah Terdeteksi {selectedBin ? `• ${selectedBin.nodeId}` : ""}</h2>
-          {binDetections.length === 0 && (
+          {detections.length === 0 && (
             <span style={{ fontSize: 11, color: "var(--text-tertiary)", border: "1px solid var(--border-color)", padding: "2px 8px", borderRadius: 999 }}>belum ada</span>
           )}
         </div>
-        {binDetections.length === 0 ? (
+        {detections.length === 0 ? (
           <p style={{ padding: 16, color: "var(--text-tertiary)" }}>
             Belum ada deteksi pemilahan untuk bin ini pada periode {periodLabel}.
           </p>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {binDetections.map((d) => {
+            {detections.map((d) => {
               const meta = WASTE_META.find((m) => m.label === d.label) ?? WASTE_META[WASTE_META.length - 1];
               return (
                 <li key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 6px", borderTop: "1px solid var(--border-color, #eef0ee)" }}>
@@ -556,9 +566,6 @@ export default function AnalyticsPage() {
                   <span style={{ fontWeight: 600, color: "var(--text-primary)", minWidth: 92 }}>{meta.name}</span>
                   <span style={{ fontSize: 13, color: "var(--text-secondary)", minWidth: 54 }}>
                     {d.confidence != null ? `${Math.round(d.confidence * 100)}%` : "—"}
-                  </span>
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                    {d.weight != null ? `${d.weight.toFixed(1)} kg` : ""}
                   </span>
                   <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>
                     {new Date(d.createdAt).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}

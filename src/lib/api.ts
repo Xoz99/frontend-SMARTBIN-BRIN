@@ -7,6 +7,7 @@ import type {
   Alert,
   Area,
   Bin,
+  Classification,
   ClassificationSummary,
   Deposit,
   Pagination,
@@ -294,6 +295,22 @@ export async function getClassificationSummary(params: { from?: string; to?: str
   const qs = q.toString();
   const { data } = await request<ClassificationSummary>(
     `/classifications/summary${qs ? `?${qs}` : ""}`,
+  );
+  return data;
+}
+
+// Daftar deteksi klasifikasi terbaru (panel "Jenis Sampah Terdeteksi").
+export async function getClassifications(
+  params: { binId?: string; from?: string; to?: string; limit?: number } = {},
+) {
+  const q = new URLSearchParams();
+  if (params.binId) q.set("binId", params.binId);
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  if (params.limit) q.set("limit", String(params.limit));
+  const qs = q.toString();
+  const { data } = await request<Classification[]>(
+    `/classifications${qs ? `?${qs}` : ""}`,
   );
   return data;
 }

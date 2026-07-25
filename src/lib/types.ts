@@ -120,6 +120,17 @@ export interface Deposit {
   user?: { id: string; name: string };
 }
 
+// Satu deteksi klasifikasi (kamera/pemilah) — tiap objek yang terdeteksi.
+// Beda dari Deposit: tercatat SETIAP deteksi (tanpa butuh pairing berat).
+export interface Classification {
+  id: string;
+  binId: string;
+  label: WasteLabel;
+  confidence: number;
+  createdAt: string;
+  bin?: { nodeId: string; location: string };
+}
+
 // Titik data grafik volume mingguan (/analytics/weekly-volume).
 export interface WeeklyVolumePoint {
   day: string; // "YYYY-MM-DD"
