@@ -38,6 +38,7 @@ export default function BinsPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   // Modal kelola area
   const [areaOpen, setAreaOpen] = useState(false);
@@ -55,10 +56,10 @@ export default function BinsPage() {
   const q = query.trim().toLowerCase();
   const filteredBins = q
     ? bins.filter((b) =>
-        b.nodeId.toLowerCase().includes(q) ||
-        b.location.toLowerCase().includes(q) ||
-        (b.area?.name ?? "").toLowerCase().includes(q),
-      )
+      b.nodeId.toLowerCase().includes(q) ||
+      b.location.toLowerCase().includes(q) ||
+      (b.area?.name ?? "").toLowerCase().includes(q),
+    )
     : bins;
 
   const load = useCallback(async () => {
@@ -136,6 +137,37 @@ export default function BinsPage() {
   };
 
   const close = () => { if (!saving) setOpen(false); };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolokasi tidak didukung oleh browser Anda.");
+      return;
+    }
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((prev) => ({
+          ...prev,
+          lat: position.coords.latitude.toFixed(6),
+          lng: position.coords.longitude.toFixed(6),
+        }));
+        setGettingLocation(false);
+      },
+      (error) => {
+        let msg = "Gagal mengambil lokasi.";
+        if (error.code === error.PERMISSION_DENIED) {
+          msg = "Izin akses lokasi ditolak.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = "Informasi lokasi tidak tersedia.";
+        } else if (error.code === error.TIMEOUT) {
+          msg = "Waktu permintaan lokasi habis.";
+        }
+        alert(msg);
+        setGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,7 +412,7 @@ export default function BinsPage() {
                 <input
                   value={form.lat}
                   onChange={(e) => setForm({ ...form, lat: e.target.value })}
-                  placeholder="-6.2088"
+                  placeholder="Masukan Latitude"
                   inputMode="decimal"
                 />
               </label>
@@ -389,11 +421,30 @@ export default function BinsPage() {
                 <input
                   value={form.lng}
                   onChange={(e) => setForm({ ...form, lng: e.target.value })}
-                  placeholder="106.8456"
+                  placeholder="Masukan Longtitude"
                   inputMode="decimal"
                 />
               </label>
             </div>
+
+            <button
+              type="button"
+              className={styles.locationBtn}
+              onClick={handleGetCurrentLocation}
+              disabled={gettingLocation}
+            >
+              {gettingLocation ? (
+                <>
+                  <CircleNotchIcon size={16} weight="bold" className={styles.spin} />
+                  Mengambil lokasi...
+                </>
+              ) : (
+                <>
+                  <MapPinIcon size={16} weight="bold" />
+                  Gunakan Lokasi Saat Ini
+                </>
+              )}
+            </button>
 
             <label className={styles.field}>
               <span>Area <span className={styles.optional}>(opsional)</span></span>

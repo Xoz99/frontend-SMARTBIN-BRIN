@@ -430,6 +430,34 @@
   gap: var(--spacing-md);
 }
 
+.locationBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: var(--bg-color);
+  color: var(--color-green);
+  border: 1px dashed var(--color-green);
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.locationBtn:hover:not(:disabled) {
+  background: var(--color-green-light);
+  border-style: solid;
+}
+
+.locationBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .modalActions {
   display: flex;
   justify-content: flex-end;
