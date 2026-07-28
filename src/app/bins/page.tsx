@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
 import type { Area, Bin, SensorReading } from "@/lib/types";
 import { binVolume, binStatus, STATUS_LABEL, latestReading, timeAgo, liveBattery, formatWeight } from "@/lib/binStatus";
+import CameraDetect from "@/components/CameraDetect";
 import styles from "./page.module.css";
 
 interface FormState {
@@ -613,6 +614,9 @@ export default function BinsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Deteksi jenis sampah via kamera device admin (inference di VPS) */}
+              {isAdmin && <CameraDetect nodeId={detailBin.nodeId} />}
 
               {/* Info detail */}
               <div className={styles.infoList}>
