@@ -37,7 +37,7 @@ function timeAgo(iso?: string): string {
  * - Deteksi: jenis sampah yang terdeteksi & dieksekusi Pi (dari CLASSIFICATION_NEW,
  *   realtime) — ditampilkan sebagai overlay di feed.
  */
-export default function RaspiCameraView({ nodeId, binId }: { nodeId: string; binId?: string }) {
+export default function RaspiCameraView({ nodeId, binId, roiFrac = 0.6 }: { nodeId: string; binId?: string; roiFrac?: number }) {
   const [ts, setTs] = useState(() => Date.now());
   const [ok, setOk] = useState<boolean | null>(null);
   const [det, setDet] = useState<Detection | null>(null);
@@ -109,6 +109,20 @@ export default function RaspiCameraView({ nodeId, binId }: { nodeId: string; bin
             {ok === null ? "Memuat kamera…" : "Kamera offline / belum ada frame"}
           </div>
         )}
+
+        {/* Panduan AREA DETEKSI (ROI) — samain dgn ROI_FRAC di Pi. Posisiin kamera
+            biar buletan merah pas di dalam kotak ini. */}
+        <div style={{
+          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+          height: `${Math.round(roiFrac * 100)}%`, aspectRatio: "1 / 1",
+          border: "2px dashed rgba(255,255,255,0.75)", borderRadius: 10, pointerEvents: "none",
+          boxShadow: "0 0 0 9999px rgba(0,0,0,0.12)",
+        }}>
+          <span style={{ position: "absolute", top: -19, left: 0, fontSize: 10, fontWeight: 600,
+            color: "#fff", background: "rgba(0,0,0,0.5)", padding: "1px 6px", borderRadius: 5, whiteSpace: "nowrap" }}>
+            area deteksi
+          </span>
+        </div>
 
         {/* Overlay hasil deteksi terakhir */}
         {det && meta && (
