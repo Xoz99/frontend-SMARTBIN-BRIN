@@ -131,10 +131,11 @@ export interface Classification {
   bin?: { nodeId: string; location: string };
 }
 
-// Titik data grafik volume mingguan (/analytics/weekly-volume).
+// Titik data grafik "Sampah Terpilah 7 Hari" (/analytics/weekly-volume).
+// count = jumlah klasifikasi (sampah terpilah) hari itu — reliable dari kamera.
 export interface WeeklyVolumePoint {
   day: string; // "YYYY-MM-DD"
-  totalKg: number;
+  count: number;
 }
 
 // Agregasi jenis sampah dari pemilah (GET /classifications/summary).

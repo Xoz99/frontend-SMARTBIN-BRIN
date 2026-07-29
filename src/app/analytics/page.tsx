@@ -251,9 +251,9 @@ export default function AnalyticsPage() {
   }, [wasteDistribution]);
   const alertAktif = alerts.filter((a) => !a.resolved).length;
 
-  // Grafik volume mingguan (kg) dari /analytics/weekly-volume.
+  // Grafik "Sampah Terpilah 7 Hari" (jumlah item/hari) dari /analytics/weekly-volume.
   const weeklyData = useMemo(
-    () => weekly.map((w) => ({ day: DAY_NAMES[new Date(w.day).getDay()], value: Math.round(w.totalKg) })),
+    () => weekly.map((w) => ({ day: DAY_NAMES[new Date(w.day).getDay()], value: w.count })),
     [weekly],
   );
   const maxKg = Math.max(1, ...weeklyData.map((d) => d.value));
@@ -409,14 +409,14 @@ export default function AnalyticsPage() {
       {/* Charts Row */}
       <div className={styles.chartsRow}>
         <div className={styles.chartPanel}>
-          <div className={styles.panelHeader}><h2>Volume Sampah 7 Hari (kg)</h2></div>
+          <div className={styles.panelHeader}><h2>Sampah Terpilah 7 Hari (item)</h2></div>
           <div className={styles.barChartContainer}>
             <div className={styles.chartBars}>
               {weeklyData.map((data, index) => (
                 <div key={index} className={styles.barGroup}>
                   <div className={styles.barWrapper}>
                     <div className={styles.barFill} style={{ height: `${(data.value / maxKg) * 100}%` }}>
-                      <span className={styles.tooltip}>{data.value}kg</span>
+                      <span className={styles.tooltip}>{data.value} item</span>
                     </div>
                   </div>
                   <span className={styles.barLabel}>{data.day}</span>
@@ -424,7 +424,7 @@ export default function AnalyticsPage() {
               ))}
             </div>
             <div className={styles.chartGridLines}>
-              <span>{maxKg}kg</span><span>{Math.round(maxKg * 0.66)}kg</span><span>{Math.round(maxKg * 0.33)}kg</span><span>0</span>
+              <span>{maxKg}</span><span>{Math.round(maxKg * 0.66)}</span><span>{Math.round(maxKg * 0.33)}</span><span>0</span>
             </div>
           </div>
         </div>
