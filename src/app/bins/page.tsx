@@ -615,8 +615,8 @@ export default function BinsPage() {
                 </div>
               )}
 
-              {/* Monitor kamera fisik Raspi (frame di-push Pi → backend) */}
-              <RaspiCameraView nodeId={detailBin.nodeId} />
+              {/* Monitor kamera fisik Raspi + hasil deteksi terakhir */}
+              <RaspiCameraView nodeId={detailBin.nodeId} binId={detailBin.id} />
 
               {/* Info detail */}
               <div className={styles.infoList}>
