@@ -108,8 +108,16 @@ export async function getBins() {
 }
 
 // Riwayat SensorLog sebuah bin (terbaru dulu). Termasuk metrik LoRa rssi/snr/packetLen.
-export async function getBinHistory(id: string, limit = 200) {
-  const { data } = await request<SensorReading[]>(`/bins/${id}/history?limit=${limit}`);
+export async function getBinHistory(
+  id: string,
+  params: { from?: string; to?: string; limit?: number; transport?: "lora" | "http" } = {},
+) {
+  const q = new URLSearchParams();
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  if (params.transport) q.set("transport", params.transport);
+  q.set("limit", String(params.limit ?? 2000));
+  const { data } = await request<SensorReading[]>(`/bins/${id}/history?${q.toString()}`);
   return data;
 }
 

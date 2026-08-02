@@ -129,8 +129,12 @@ export default function AnalyticsPage() {
         throughputBps: (payload.throughputBps as number) ?? null,
         createdAt: (payload.timestamp as string) ?? new Date().toISOString(),
       };
-      // Riwayat disimpan terbaru-dulu (sesuai endpoint). Prepend & batasi 200.
-      setSignalHistory((prev) => [point, ...prev].slice(0, 200));
+      // Hanya tambah titik yang masuk periode terpilih (biar konsisten dgn filter;
+      // untuk periode lampau, paket live "sekarang" tidak ikut nyampur).
+      const pt = new Date(point.createdAt ?? Date.now()).getTime();
+      if (pt < from.getTime() || pt > to.getTime()) return;
+      // Riwayat disimpan terbaru-dulu (sesuai endpoint). Prepend & batasi.
+      setSignalHistory((prev) => [point, ...prev].slice(0, 2000));
     }
   });
 
@@ -182,7 +186,9 @@ export default function AnalyticsPage() {
     setSignalLoading(true);
     (async () => {
       try {
-        const rows = await api.getBinHistory(selectedBinId, 200);
+        const rows = await api.getBinHistory(selectedBinId, {
+          from: from.toISOString(), to: to.toISOString(), limit: 2000,
+        });
         if (active) setSignalHistory(rows);
       } catch (e) {
         if (e instanceof ApiError && e.status === 404 && active) setSignalUnsupported(true);
@@ -191,7 +197,7 @@ export default function AnalyticsPage() {
       }
     })();
     return () => { active = false; };
-  }, [selectedBinId, tick]);
+  }, [selectedBinId, from, to, tick]);
 
   // Reset jumlah tampil ke 8 tiap ganti bin / periode.
   useEffect(() => { setDetectLimit(8); }, [selectedBinId, from, to]);
