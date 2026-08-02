@@ -26,6 +26,10 @@ function formatDateID(s: string) {
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 function daysAgoISO(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); }
 
+// Jeda antar-paket lebih dari ini dianggap "alat idle/mati antar-sesi", bukan
+// bagian pengukuran → diabaikan saat hitung throughput/jeda/jitter biar bersih.
+const MAX_GAP_SEC = 300; // 5 menit
+
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
 // Format throughput bit/detik → "– / bps / kbps" biar ringkas di tabel.
@@ -276,9 +280,15 @@ export default function AnalyticsPage() {
     const len = rows.filter((r) => r.packetLen != null).map((r) => ({ t: r.ts, v: r.packetLen as number }));
 
     const packets = rows.length;
-    const spanSec = packets >= 2 ? (rows[packets - 1].ts - rows[0].ts) / 1000 : 0;
-    const perMin = spanSec > 0 ? (packets - 1) / (spanSec / 60) : 0;
-    const avgGap = packets >= 2 ? spanSec / (packets - 1) : 0;
+    // Buang jeda idle besar antar-sesi (lihat MAX_GAP_SEC) → metrik cuma dari sesi aktif.
+    const gaps: number[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      const g = (rows[i].ts - rows[i - 1].ts) / 1000;
+      if (g <= MAX_GAP_SEC) gaps.push(g);
+    }
+    const spanSec = gaps.reduce((s, g) => s + g, 0);   // durasi sesi aktif (tanpa gap besar)
+    const perMin = spanSec > 0 ? gaps.length / (spanSec / 60) : 0;
+    const avgGap = gaps.length ? spanSec / gaps.length : 0;
     const hasSnr = snr.length > 0;
     const mean = (arr: { v: number }[]) => (arr.length ? arr.reduce((s, p) => s + p.v, 0) / arr.length : null);
     const avgRssi = mean(rssi);
@@ -298,11 +308,16 @@ export default function AnalyticsPage() {
     const metricsFor = (tp: "lora" | "http") => {
       const rs = rows.filter((r) => r.transport === tp).sort((a, b) => a.ts - b.ts);
       const packets = rs.length;
-      const spanSec = packets >= 2 ? (rs[packets - 1].ts - rs[0].ts) / 1000 : 0;
-      const perMin = spanSec > 0 ? (packets - 1) / (spanSec / 60) : 0;
+      // Buang jeda idle besar (alat mati/nyala antar-sesi) → jitter, jeda, & throughput
+      // mencerminkan sesi aktif, bukan gap berjam-jam. Gap > MAX_GAP_SEC diabaikan.
       const gaps: number[] = [];
-      for (let i = 1; i < rs.length; i++) gaps.push((rs[i].ts - rs[i - 1].ts) / 1000);
-      const avgGap = gaps.length ? gaps.reduce((s, g) => s + g, 0) / gaps.length : 0;
+      for (let i = 1; i < rs.length; i++) {
+        const g = (rs[i].ts - rs[i - 1].ts) / 1000;
+        if (g <= MAX_GAP_SEC) gaps.push(g);
+      }
+      const activeSec = gaps.reduce((s, g) => s + g, 0);
+      const perMin = activeSec > 0 ? gaps.length / (activeSec / 60) : 0;
+      const avgGap = gaps.length ? activeSec / gaps.length : 0;
       const jitter = gaps.length ? Math.sqrt(gaps.reduce((s, g) => s + (g - avgGap) ** 2, 0) / gaps.length) : 0;
       // packet loss dari seq (paket hilang = seq yang bolong)
       const seqs = rs.map((r) => r.seq).filter((s): s is number => s != null);
