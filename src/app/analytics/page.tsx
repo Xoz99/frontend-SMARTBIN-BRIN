@@ -24,6 +24,12 @@ function formatDateID(s: string) {
   return `${d}/${m}/${y}`;
 }
 function todayISO() { return new Date().toISOString().slice(0, 10); }
+// "2026-07-30" → tengah malam waktu LOKAL. new Date("2026-07-30") diparse sebagai
+// UTC, jadi di WIB mundur 7 jam & data pagi hari ikut kebuang dari rentang.
+function parseLocalDate(s: string) {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
+}
 function daysAgoISO(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); }
 
 // Jeda antar-paket lebih dari ini dianggap "alat idle/mati antar-sesi", bukan
@@ -83,8 +89,8 @@ export default function AnalyticsPage() {
     if (activePeriod === "Bulan ini") {
       const s = new Date(); s.setDate(1); s.setHours(0, 0, 0, 0); return [s, end];
     }
-    const s = customStart ? new Date(customStart) : new Date(daysAgoISO(7));
-    const e = customEnd ? new Date(customEnd) : new Date();
+    const s = parseLocalDate(customStart || daysAgoISO(7));
+    const e = parseLocalDate(customEnd || todayISO());
     e.setHours(23, 59, 59, 999);
     return [s, e];
   }, [activePeriod, customStart, customEnd]);
@@ -193,7 +199,14 @@ export default function AnalyticsPage() {
         const rows = await api.getBinHistory(selectedBinId, {
           from: from.toISOString(), to: to.toISOString(), limit: 2000,
         });
-        if (active) setSignalHistory(rows);
+        // Saring ulang di klien: sebagian endpoint history mengabaikan from/to dan
+        // balikin N baris terbaru, bikin grafik nampilin tanggal di luar filter.
+        const lo = from.getTime(), hi = to.getTime();
+        const inRange = rows.filter((r) => {
+          const t = new Date(r.createdAt ?? r.timestamp ?? 0).getTime();
+          return t > 0 && t >= lo && t <= hi;
+        });
+        if (active) setSignalHistory(inRange);
       } catch (e) {
         if (e instanceof ApiError && e.status === 404 && active) setSignalUnsupported(true);
       } finally {
