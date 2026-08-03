@@ -18,13 +18,19 @@ interface CompareChartProps {
   series: CompareSeries[];
   decimals?: number;
   hint?: string;
+  rangeLabel?: string; // periode filter aktif (mis. "minggu ini") — konteks sumbu waktu
 }
 
 const W = 560;
-const H = 220;
-const PAD = { l: 48, r: 16, t: 16, b: 28 };
+const H = 232;
+const PAD = { l: 48, r: 16, t: 16, b: 40 }; // b lebih lega: label sumbu-X 2 baris (tanggal + jam)
 
-export default function CompareChart({ title, unit, series, decimals = 0, hint }: CompareChartProps) {
+const fmtDay = (t: number) => new Date(t).toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
+const fmtClock = (t: number) => new Date(t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const fmtFull = (t: number) =>
+  `${new Date(t).toLocaleDateString("id-ID", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })} • ${fmtClock(t)}`;
+
+export default function CompareChart({ title, unit, series, decimals = 0, hint, rangeLabel }: CompareChartProps) {
   const [hoverX, setHoverX] = useState<number | null>(null);
 
   const all = useMemo(() => series.flatMap((s) => s.points), [series]);
@@ -53,7 +59,14 @@ export default function CompareChart({ title, unit, series, decimals = 0, hint }
     return { v, y: sy(v) };
   });
   const xTicks = hasData ? [0, 0.5, 1].map((f) => ({ t: tMin + f * tSpan, x: PAD.l + f * plotW })) : [];
-  const fmtTime = (t: number) => new Date(t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  // Data lintas hari → tiap tick dikasih tanggalnya. Kalau satu hari saja, tanggal
+  // cukup tampil sekali di subjudul biar sumbu-X nggak penuh.
+  const multiDay = hasData && new Date(tMin).toDateString() !== new Date(tMax).toDateString();
+  const dataRangeLabel = hasData
+    ? multiDay
+      ? `${fmtDay(tMin)} ${fmtClock(tMin)} – ${fmtDay(tMax)} ${fmtClock(tMax)}`
+      : `${new Date(tMin).toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })} • ${fmtClock(tMin)} – ${fmtClock(tMax)}`
+    : null;
 
   function onMove(e: React.MouseEvent<SVGSVGElement>) {
     if (!hasData) return;
@@ -89,6 +102,12 @@ export default function CompareChart({ title, unit, series, decimals = 0, hint }
           ))}
         </div>
       </div>
+      {dataRangeLabel && (
+        <div style={{ fontSize: 12, color: "var(--text-secondary, #555)", marginBottom: 4 }}>
+          {dataRangeLabel}
+          {rangeLabel && <span style={{ color: "var(--text-tertiary, #888)" }}> · filter: {rangeLabel}</span>}
+        </div>
+      )}
       {hint && <div style={{ fontSize: 11, color: "var(--text-tertiary, #888)", fontStyle: "italic", marginBottom: 6 }}>{hint}</div>}
 
       <div style={{ position: "relative", width: "100%" }}>
@@ -100,9 +119,17 @@ export default function CompareChart({ title, unit, series, decimals = 0, hint }
               <text x={PAD.l - 8} y={g.y + 3} textAnchor="end" fontSize={10} fill="var(--text-tertiary, #999)">{g.v.toFixed(decimals)}</text>
             </g>
           ))}
-          {xTicks.map((tk, i) => (
-            <text key={i} x={tk.x} y={H - 9} textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"} fontSize={10} fill="var(--text-tertiary, #999)">{fmtTime(tk.t)}</text>
-          ))}
+          {xTicks.map((tk, i) => {
+            const anchor = i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle";
+            return (
+              <g key={i}>
+                {multiDay && (
+                  <text x={tk.x} y={H - 20} textAnchor={anchor} fontSize={10} fontWeight={600} fill="var(--text-secondary, #666)">{fmtDay(tk.t)}</text>
+                )}
+                <text x={tk.x} y={H - 8} textAnchor={anchor} fontSize={10} fill="var(--text-tertiary, #999)">{fmtClock(tk.t)}</text>
+              </g>
+            );
+          })}
 
           {series.map((s) => s.points.length >= 2 && (
             <polyline key={s.name} points={s.points.map((p) => `${sx(p.t).toFixed(1)},${sy(p.v).toFixed(1)}`).join(" ")}
@@ -123,11 +150,13 @@ export default function CompareChart({ title, unit, series, decimals = 0, hint }
 
         {hoverX != null && hoverPoints.length > 0 && (
           <div style={{ position: "absolute", left: `${(hoverX / W) * 100}%`, top: 0, transform: "translate(-50%, -4px)", background: "var(--text-primary, #1a1a1a)", color: "#fff", fontSize: 11, lineHeight: 1.5, padding: "6px 9px", borderRadius: 7, whiteSpace: "nowrap", pointerEvents: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.18)" }}>
-            <div style={{ opacity: 0.7, marginBottom: 2 }}>{fmtTime(hoverPoints[0].p.t)}</div>
+            <div style={{ opacity: 0.7, marginBottom: 2 }}>{fmtFull(hoverPoints[0].p.t)}</div>
             {hoverPoints.map((h) => (
               <div key={h.name}>
                 <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: h.color, marginRight: 5 }} />
                 {h.name}: <strong>{h.p.v.toFixed(decimals)} {unit}</strong>
+                {/* titik terdekat tiap seri bisa beda waktu → tampilkan kalau meleset */}
+                {h.p.t !== hoverPoints[0].p.t && <span style={{ opacity: 0.6 }}> ({fmtFull(h.p.t)})</span>}
               </div>
             ))}
           </div>

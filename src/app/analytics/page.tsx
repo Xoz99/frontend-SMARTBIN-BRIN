@@ -661,6 +661,7 @@ export default function AnalyticsPage() {
               title="Latency device → Server (ms)"
               unit="ms"
               decimals={0}
+              rangeLabel={periodLabel}
               hint="Makin rendah makin cepat. Offset jam device saling meniadakan saat LoRa vs HTTP dibandingkan."
               series={[
                 { name: "LoRa", color: "#48846C", points: compare.lora.latSeries },
