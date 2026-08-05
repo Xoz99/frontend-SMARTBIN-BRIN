@@ -332,14 +332,29 @@ export default function AnalyticsPage() {
       const perMin = activeSec > 0 ? gaps.length / (activeSec / 60) : 0;
       const avgGap = gaps.length ? activeSec / gaps.length : 0;
       const jitter = gaps.length ? Math.sqrt(gaps.reduce((s, g) => s + (g - avgGap) ** 2, 0) / gaps.length) : 0;
-      // packet loss dari seq (paket hilang = seq yang bolong)
-      const seqs = rs.map((r) => r.seq).filter((s): s is number => s != null);
-      let lossPct: number | null = null, expected = 0, received = seqs.length;
-      if (seqs.length >= 2) {
-        const uniq = new Set(seqs).size;
-        expected = Math.max(...seqs) - Math.min(...seqs) + 1;
-        received = uniq;
-        lossPct = expected > 0 ? Math.max(0, ((expected - uniq) / expected) * 100) : null;
+      // packet loss dari seq — SADAR RESTART. Tiap perangkat restart, seq balik ke 1
+      // (pola gigi gergaji), jadi seq TIDAK monoton di seluruh rentang. Kalau dihitung
+      // naif (max−min), lompatan mundur saat restart bikin angka loss loncat-loncat
+      // (kadang 0, kadang 0.x%). Di sini paket hilang hanya dihitung DALAM satu sesi
+      // (segmen antar-restart); lompatan mundur seq = restart, bukan paket hilang.
+      // rs sudah urut waktu naik.
+      let lossPct: number | null = null, expected = 0, received = 0;
+      {
+        let gaps = 0;
+        let prevSeq: number | null = null;
+        for (const r of rs) {
+          if (r.seq == null) continue;
+          if (prevSeq != null) {
+            const d = r.seq - prevSeq;
+            if (d < 0) { /* seq turun → restart, mulai segmen baru (bukan loss) */ }
+            else if (d === 0) { continue; }        // duplikat → jangan hitung ganda
+            else if (d > 1) { gaps += d - 1; }     // (d−1) paket hilang dalam segmen
+          }
+          received++;
+          prevSeq = r.seq;
+        }
+        expected = received + gaps;
+        lossPct = received >= 2 && expected > 0 ? (gaps / expected) * 100 : null;
       }
       const latSeries = rs.filter((r) => r.latencyMs != null).map((r) => ({ t: r.ts, v: r.latencyMs as number }));
       const avgLat = latSeries.length ? latSeries.reduce((s, p) => s + p.v, 0) / latSeries.length : null;
@@ -683,7 +698,7 @@ export default function AnalyticsPage() {
             />
 
             <p style={{ marginTop: 12, fontSize: 12, color: "var(--text-tertiary)" }}>
-              Packet loss dihitung dari lompatan nomor urut (<code>seq</code>) per jalur; latency dari selisih <code>sentAt</code> device dan waktu terima backend.
+              Packet loss dihitung dari nomor urut (<code>seq</code>) per jalur secara per-sesi — memperhitungkan reset <code>seq</code> saat perangkat restart agar tidak salah hitung; latency dari selisih <code>sentAt</code> device dan waktu terima backend.
             </p>
           </>
         )}
