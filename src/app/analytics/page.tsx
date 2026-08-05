@@ -144,7 +144,8 @@ export default function AnalyticsPage() {
       const pt = new Date(point.createdAt ?? Date.now()).getTime();
       if (pt < from.getTime() || pt > to.getTime()) return;
       // Riwayat disimpan terbaru-dulu (sesuai endpoint). Prepend & batasi.
-      setSignalHistory((prev) => [point, ...prev].slice(0, 2000));
+      // Batas selaras dgn limit fetch (5000) biar titik lama tak kepotong saat live.
+      setSignalHistory((prev) => [point, ...prev].slice(0, 5000));
     }
   });
 
@@ -197,7 +198,10 @@ export default function AnalyticsPage() {
     (async () => {
       try {
         const rows = await api.getBinHistory(selectedBinId, {
-          from: from.toISOString(), to: to.toISOString(), limit: 2000,
+          // Limit tinggi (backend cap 5000) supaya SELURUH baris di rentang keambil —
+          // bukan cuma N terbaru. Kalau limit kekecilan, data periode awal ke-drop &
+          // grafik/metrik cuma nampilin sebagian akhir rentang.
+          from: from.toISOString(), to: to.toISOString(), limit: 5000,
         });
         // Saring ulang di klien: sebagian endpoint history mengabaikan from/to dan
         // balikin N baris terbaru, bikin grafik nampilin tanggal di luar filter.
