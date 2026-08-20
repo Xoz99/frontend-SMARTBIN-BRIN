@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { API_BASE } from "@/lib/api";
 import * as api from "@/lib/api";
 import { useRealtime } from "@/lib/useRealtime";
+import { useAuth } from "@/context/AuthContext";
 import type { WasteLabel } from "@/lib/types";
 
 // Nama + warna per jenis (samain palet app).
@@ -43,6 +44,59 @@ export default function RaspiCameraView({ nodeId, binId, roiFrac = 0.6 }: { node
   const [det, setDet] = useState<Detection | null>(null);
   const [flash, setFlash] = useState(false);
 
+  // Kontrol kamera Pi (remote lewat MQTT). null = belum tahu statusnya.
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const [camOn, setCamOn] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [ctlMsg, setCtlMsg] = useState<string | null>(null);
+
+  // Status awal kamera dari state retained (instan, nol beban ke Pi).
+  useEffect(() => {
+    if (!isAdmin) return;
+    let active = true;
+    (async () => {
+      try {
+        const st = await api.getDeviceStatus(nodeId);
+        if (active) setCamOn(st?.camera === "running");
+      } catch {
+        // 404 = Pi belum pernah lapor state (REMOTE_CONTROL=0 / belum konek).
+        if (active) setCamOn(null);
+      }
+    })();
+    return () => { active = false; };
+  }, [nodeId, isAdmin]);
+
+  async function toggleCam() {
+    if (busy) return;
+    setBusy(true);
+    setCtlMsg(null);
+    const nyalain = camOn !== true;
+    try {
+      let running = false;
+      let devErr: string | null = null;
+      if (nyalain) {
+        const r = await api.startCamera(nodeId);
+        running = !!r?.running;
+        devErr = r?.error ?? null;
+      } else {
+        running = !!(await api.stopCamera(nodeId))?.running;
+      }
+      setCamOn(running);
+      if (nyalain && !running) {
+        // Pi jawab tapi kameranya gagal kebuka (mis. index salah / dipakai proses lain).
+        setCtlMsg(devErr || "Kamera gagal dinyalakan di perangkat");
+      } else {
+        setCtlMsg(nyalain ? "Kamera dinyalakan" : "Kamera dimatikan");
+        setTimeout(() => setCtlMsg(null), 2500);
+      }
+    } catch (e) {
+      setCtlMsg(e instanceof Error ? e.message : "Perintah gagal dikirim");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Refresh frame kamera.
   useEffect(() => {
     const id = setInterval(() => setTs(Date.now()), 1200);
@@ -66,8 +120,15 @@ export default function RaspiCameraView({ nodeId, binId, roiFrac = 0.6 }: { node
 
   // Realtime: tiap Pi mendeteksi & eksekusi → update hasil + kilat highlight.
   useRealtime((event, payload) => {
-    if (event !== "CLASSIFICATION_NEW") return;
     if ((payload.nodeId as string) !== nodeId) return;
+    // Pi ngirim snapshot state tiap ~15 dtk → status tombol ikut sinkron
+    // walau kamera dinyalakan/dimatikan dari tempat lain (app, SSH).
+    if (event === "DEVICE_STATE") {
+      if (payload.online === false) setCamOn(false);
+      else if (typeof payload.camera === "string") setCamOn(payload.camera === "running");
+      return;
+    }
+    if (event !== "CLASSIFICATION_NEW") return;
     setDet({
       label: payload.label as WasteLabel,
       confidence: (payload.confidence as number) ?? 0,
@@ -92,7 +153,35 @@ export default function RaspiCameraView({ nodeId, binId, roiFrac = 0.6 }: { node
           <span style={{ width: 7, height: 7, borderRadius: 999, background: ok ? "#48846C" : "#c25a5e" }} />
           {ok === null ? "menghubungkan…" : ok ? "LIVE" : "offline"}
         </span>
+
+        {/* Aktifkan/matikan kamera Pi dari jauh. ADMIN saja — backend juga
+            mengunci endpoint-nya, ini cuma biar tombolnya tidak menipu. */}
+        {isAdmin && (
+          <button
+            onClick={toggleCam}
+            disabled={busy}
+            title={camOn === null ? "Status kamera belum diketahui" : camOn ? "Matikan kamera Pi" : "Nyalakan kamera Pi"}
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 999,
+              cursor: busy ? "wait" : "pointer",
+              border: `1px solid ${camOn ? "#c25a5e" : "#48846C"}`,
+              background: camOn ? "transparent" : "#48846C",
+              color: camOn ? "#c25a5e" : "#fff",
+              opacity: busy ? 0.6 : 1,
+              transition: "opacity 0.15s ease",
+            }}
+          >
+            {busy ? "…" : camOn ? "■ Matikan" : "▶ Aktifkan"} kamera
+          </button>
+        )}
       </div>
+
+      {ctlMsg && (
+        <p style={{ fontSize: 11, margin: "0 2px 8px", color: "var(--text-secondary, #555)" }}>
+          {ctlMsg}
+        </p>
+      )}
 
       <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3", borderRadius: 12, overflow: "hidden", background: "#000", border: "1px solid var(--border-color, #eef0ee)" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -106,7 +195,11 @@ export default function RaspiCameraView({ nodeId, binId, roiFrac = 0.6 }: { node
         {ok !== true && (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, color: "#999", fontSize: 13 }}>
             <span style={{ fontSize: 26 }}>📷</span>
-            {ok === null ? "Memuat kamera…" : "Kamera offline / belum ada frame"}
+            {ok === null
+              ? "Memuat kamera…"
+              : camOn === false
+                ? "Kamera dimatikan" + (isAdmin ? " — tekan Aktifkan" : "")
+                : "Kamera offline / belum ada frame"}
           </div>
         )}
 

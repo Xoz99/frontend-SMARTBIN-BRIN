@@ -8,6 +8,7 @@ import type {
   Area,
   Bin,
   Classification,
+  DeviceState,
   ClassificationSummary,
   Deposit,
   Pagination,
@@ -319,6 +320,35 @@ export async function getClassifications(
   const qs = q.toString();
   const { data } = await request<Classification[]>(
     `/classifications${qs ? `?${qs}` : ""}`,
+  );
+  return data;
+}
+
+// ── Remote control Raspi (butuh role ADMIN di backend) ────────────────
+// Perintah dikirim lewat MQTT ke Pi (smartbin/{nodeId}/device/cmd) lalu
+// nunggu ack. Bisa timeout ~12 dtk kalau Pi lagi offline.
+
+// live=true → tanya langsung ke Pi (akurat, ~1 dtk). Default baca state
+// retained yang instan tapi bisa basi beberapa detik.
+export async function getDeviceStatus(nodeId: string, live = false) {
+  const { data } = await request<DeviceState>(
+    `/devices/${encodeURIComponent(nodeId)}/status${live ? "?live=1" : ""}`,
+  );
+  return data;
+}
+
+export async function startCamera(nodeId: string) {
+  const { data } = await request<{ started?: boolean; running: boolean; error?: string | null }>(
+    `/devices/${encodeURIComponent(nodeId)}/camera/start`,
+    { method: "POST" },
+  );
+  return data;
+}
+
+export async function stopCamera(nodeId: string) {
+  const { data } = await request<{ running: boolean }>(
+    `/devices/${encodeURIComponent(nodeId)}/camera/stop`,
+    { method: "POST" },
   );
   return data;
 }

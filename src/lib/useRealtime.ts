@@ -19,7 +19,10 @@ export type RealtimeEvent =
   | "ALERT_RESOLVED"
   | "CLASSIFICATION_NEW"
   | "PICKUP_COMPLETED"
-  | "PICKUP_CONFIRMED";
+  | "PICKUP_CONFIRMED"
+  | "DEVICE_STATE"
+  | "DEVICE_ACK"
+  | "DEVICE_LOG";
 
 type Handler = (event: RealtimeEvent, payload: Record<string, unknown>) => void;
 

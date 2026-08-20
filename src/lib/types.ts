@@ -161,3 +161,21 @@ export interface Pagination {
 
 // Status visual berdasarkan volume (%). Dipakai konsisten di seluruh UI.
 export type StatusLevel = "normal" | "warning" | "critical" | "unknown";
+
+// Snapshot status perangkat Raspi (dari smartbin/{nodeId}/device/state, retained).
+// Sumber: backend/remote_control.py di Pi — lihat _snapshot() di main.py.
+export interface DeviceState {
+  nodeId?: string;
+  online?: boolean;
+  camera?: "running" | "stopped";
+  camera_error?: string | null;
+  serial_stm32?: string;
+  serial_lora?: string;
+  sensor_data?: string;
+  last_seq?: number;
+  last_detection?: {
+    kategori: string | null;
+    confidence: number | null;
+    ts: number | null;
+  };
+}
