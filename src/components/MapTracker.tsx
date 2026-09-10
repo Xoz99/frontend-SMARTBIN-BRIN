@@ -316,7 +316,9 @@ export default function MapTracker({ bins, focus }: Props) {
           color: #48846c !important;
           text-decoration: none;
         }
-        .bp-maps:hover { color: #3c7460 !important; text-decoration: underline; }
+        .leaflet-tile-pane {
+          filter: grayscale(100%) contrast(90%) brightness(105%);
+        }
       `}</style>
       <MapContainer
         center={center}
